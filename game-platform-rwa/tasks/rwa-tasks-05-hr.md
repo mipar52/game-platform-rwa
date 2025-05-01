@@ -90,7 +90,7 @@ GO
 Konačno, upotrijebite naredbu `dotnet ef` za ponovno generiranje modela. Obratite pažnju na postavljanje ispravnog connection stringa. Također, obratite pažnju na pokretanje naredbe u mapi projekta.
 
 ```
-dotnet ef dbcontext scaffold "server=.;Database=Exercise4;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
+dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
 ```
 
 ### 5.2 Implementacija CRUD-a

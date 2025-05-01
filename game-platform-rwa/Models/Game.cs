@@ -17,9 +17,9 @@ public partial class Game
 
     public int GameTypeId { get; set; }
 
+    public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
+
     public virtual GameType GameType { get; set; } = null!;
 
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
-
-    public virtual ICollection<Genre> Genres { get; set; } = new List<Genre>();
 }

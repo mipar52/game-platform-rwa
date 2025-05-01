@@ -17,6 +17,8 @@ public partial class GamePlatformRwaContext : DbContext
 
     public virtual DbSet<Game> Games { get; set; }
 
+    public virtual DbSet<GameGenre> GameGenres { get; set; }
+
     public virtual DbSet<GameType> GameTypes { get; set; }
 
     public virtual DbSet<Genre> Genres { get; set; }
@@ -45,21 +47,25 @@ public partial class GamePlatformRwaContext : DbContext
                 .HasForeignKey(d => d.GameTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Game__GameTypeId__534D60F1");
+        });
 
-            entity.HasMany(d => d.Genres).WithMany(p => p.Games)
-                .UsingEntity<Dictionary<string, object>>(
-                    "GameGenre",
-                    r => r.HasOne<Genre>().WithMany()
-                        .HasForeignKey("GenreId")
-                        .HasConstraintName("FK__GameGenre__Genre__571DF1D5"),
-                    l => l.HasOne<Game>().WithMany()
-                        .HasForeignKey("GameId")
-                        .HasConstraintName("FK__GameGenre__GameI__5629CD9C"),
-                    j =>
-                    {
-                        j.HasKey("GameId", "GenreId").HasName("PK__GameGenr__DA80C7AA23477FE3");
-                        j.ToTable("GameGenre");
-                    });
+        modelBuilder.Entity<GameGenre>(entity =>
+        {
+            entity.HasKey(e => new { e.GameId, e.GenreId }).HasName("PK__GameGenr__DA80C7AA23477FE3");
+
+            entity.ToTable("GameGenre");
+
+            entity.Property(e => e.AddedOn)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Game).WithMany(p => p.GameGenres)
+                .HasForeignKey(d => d.GameId)
+                .HasConstraintName("FK__GameGenre__GameI__5629CD9C");
+
+            entity.HasOne(d => d.Genre).WithMany(p => p.GameGenres)
+                .HasForeignKey(d => d.GenreId)
+                .HasConstraintName("FK__GameGenre__Genre__571DF1D5");
         });
 
         modelBuilder.Entity<GameType>(entity =>
