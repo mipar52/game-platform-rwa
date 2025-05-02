@@ -17,6 +17,10 @@ public partial class Game
 
     public int GameTypeId { get; set; }
 
+    public int? MetacriticScore { get; set; }
+
+    public bool? WonGameOfTheYear { get; set; }
+
     public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
 
     public virtual GameType GameType { get; set; } = null!;

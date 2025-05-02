@@ -1,6 +1,7 @@
 ﻿using game_platform_rwa.DTO_generator;
 using game_platform_rwa.DTOs;
 using game_platform_rwa.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,6 +50,9 @@ public class GameTypeController : ControllerBase
             var result =
                 context.GameTypes
                     .FirstOrDefault(x => x.Id == id);
+
+            if (result == null)
+                return NotFound($"Could not find game with ID {id}");
 
             var mappedResult = GameDTOGenerator.generateGameTypeDto(result);
 
@@ -101,6 +105,7 @@ public class GameTypeController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("[action]")]
     public IActionResult DeleteGameType(int id)
     {

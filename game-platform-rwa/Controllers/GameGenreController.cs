@@ -1,6 +1,7 @@
 ﻿using game_platform_rwa.DTO_generator;
 using game_platform_rwa.DTOs;
 using game_platform_rwa.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace game_platform_rwa.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class GameGenreController : ControllerBase
     {
         private GamePlatformRwaContext context;
@@ -53,6 +55,9 @@ namespace game_platform_rwa.Controllers
                     context.Genres
                         .FirstOrDefault(x => x.Id == id);
 
+                if (result == null)
+                    return NotFound($"Could not find game with ID {id}");
+
                 var mappedResult = GameDTOGenerator.generateGenreDto(result);
 
                 return Ok(mappedResult);
@@ -90,6 +95,7 @@ namespace game_platform_rwa.Controllers
             return CreatedAtAction(nameof(GetGenreById), new { name = newGenre.Name }, new { newGenre.Id });
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult UpdateGenre(int id, [FromBody] Genre updated)
         {
@@ -102,7 +108,8 @@ namespace game_platform_rwa.Controllers
             context.SaveChanges();
             return NoContent();
         }
-
+        
+        [Authorize(Roles = "Admin")]
         [HttpDelete("[action]")]
         public IActionResult DeleteGenre(int id)
         {

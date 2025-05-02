@@ -2,7 +2,6 @@
 using game_platform_rwa.Models;
 using game_platform_rwa.Security;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,10 +12,11 @@ namespace game_platform_rwa.Controllers
     {
         private readonly IConfiguration config;
         private readonly GamePlatformRwaContext context;
-
+        private readonly String? secureKey;
         public UserController(IConfiguration configuration, GamePlatformRwaContext context)
         {
             config = configuration;
+            secureKey = config["JWT:SecureKey"];
             this.context = context;
         }
 
@@ -28,9 +28,10 @@ namespace game_platform_rwa.Controllers
             {
                 // The same secure key must be used here to create JWT,
                 // as the one that is used by middleware to verify JWT
-                var secureKey = config["JWT:SecureKey"];
-                var serializedToken = JwtTokenProvider.CreateToken(secureKey, 120);
+                if (string.IsNullOrEmpty(secureKey))
+                    return BadRequest("Something went wrong....");
 
+                var serializedToken = JwtTokenProvider.CreateToken(secureKey, 120);
                 return Ok(serializedToken);
             }
             catch (Exception ex)
@@ -65,7 +66,6 @@ namespace game_platform_rwa.Controllers
                     Email = userDto.Email,
                     Phone = userDto.Phone,
                     RoleId = 2, // Default role for new users
-                    Role = context.Roles.FirstOrDefault(x => x.Name == "User")
                 };
 
                 // Add user and save changes to database
@@ -101,8 +101,21 @@ namespace game_platform_rwa.Controllers
                     return BadRequest(genericLoginFail);
 
                 // Create and return JWT token
-                var secureKey = config["JWT:SecureKey"];
-                var serializedToken = JwtTokenProvider.CreateToken(secureKey, 120, userDto.Username, existingUser.Role.Name);
+                var role = context.Roles.First(x => x.Id == existingUser.RoleId).Name;
+                if (role == null)
+                {
+                    return BadRequest("Could not get correct data from user. Aborting.");
+                }
+
+                if (secureKey == null)
+                    return BadRequest("Something went wrong...");
+
+                var serializedToken = JwtTokenProvider.CreateToken(
+                    secureKey, 
+                    120, 
+                    userDto.Username,
+                    role
+                    );
 
                 return Ok(serializedToken);
             }
@@ -137,7 +150,25 @@ namespace game_platform_rwa.Controllers
             return Ok("Password changed successfully");
         }
 
+        [HttpPost("[action]")]
+        [Authorize(Roles = "Admin")] // Only Admins can promote
+        public IActionResult PromoteUser(string username)
+        {
+            var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return NotFound("User not found");
 
+            var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
+            if (adminRole == null)
+                return StatusCode(500, "Admin role not found");
+
+            user.RoleId = adminRole.Id;
+            context.SaveChanges();
+
+            return Ok($"{username} has been promoted to Admin");
+        }
+
+        // helper method to check the role of the user
         [HttpGet("whoami")]
         [Authorize]
         public IActionResult WhoAmI()

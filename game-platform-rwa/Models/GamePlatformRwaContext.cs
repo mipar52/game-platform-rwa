@@ -23,6 +23,8 @@ public partial class GamePlatformRwaContext : DbContext
 
     public virtual DbSet<Genre> Genres { get; set; }
 
+    public virtual DbSet<LogEntry> LogEntries { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -44,6 +46,7 @@ public partial class GamePlatformRwaContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.GameUrl).HasMaxLength(255);
             entity.Property(e => e.Name).HasMaxLength(100);
+            entity.Property(e => e.WonGameOfTheYear).HasDefaultValue(false);
 
             entity.HasOne(d => d.GameType).WithMany(p => p.Games)
                 .HasForeignKey(d => d.GameTypeId)
@@ -90,6 +93,19 @@ public partial class GamePlatformRwaContext : DbContext
             entity.HasIndex(e => e.Name, "UQ__Genre__737584F6FAD1EE1F").IsUnique();
 
             entity.Property(e => e.Name).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LogEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__LogEntry__3214EC07D75FB14F");
+
+            entity.ToTable("LogEntry");
+
+            entity.Property(e => e.Level).HasMaxLength(20);
+            entity.Property(e => e.Message).HasMaxLength(1000);
+            entity.Property(e => e.Timestamp)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
         });
 
         modelBuilder.Entity<Review>(entity =>

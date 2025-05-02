@@ -1,3 +1,4 @@
+using game_platform_rwa.Logger;
 using game_platform_rwa.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,7 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Key)
         };
     });
+builder.Services.AddScoped<LogService>();
 
 builder.Services.AddSwaggerGen(option =>
 {

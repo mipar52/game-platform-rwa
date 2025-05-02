@@ -89,3 +89,48 @@ INSERT INTO GameGenre VALUES (3, 5);
 INSERT INTO Review VALUES (1, 1, 10, N'Amazing story and characters.', 1, '2025-04-21 13:00:04');
 INSERT INTO Review VALUES (2, 2, 7, N'Fun with friends, but toxic community.', 0, '2025-04-26 13:00:04');
 INSERT INTO Review VALUES (1, 3, 9, N'Very relaxing and enjoyable gameplay.', 1, '2025-04-29 13:00:04');
+
+ALTER TABLE [User] ADD
+  PwdSalt NVARCHAR(256) NULL,
+  FirstName NVARCHAR(256) NULL,
+  LastName NVARCHAR(256) NULL,
+  Phone NVARCHAR(256) NULL;
+
+-- Rename PasswordHash to PwdHash (T-SQL doesn't support direct rename)
+-- You must drop and recreate column or handle it in EF model via mapping workaround
+-- Recommended: add new column and deprecate old one
+ALTER TABLE [User] ADD PwdHash NVARCHAR(256) NULL;
+ALTER TABLE [User] DROP COLUMN PasswordHash;
+ALTER TABLE [User] ADD Role NVARCHAR(50) NOT NULL DEFAULT 'User';
+ALTER TABLE [User] DROP COLUMN Role;
+
+
+-- 1. Recreate the Roles table if not already done
+CREATE TABLE Roles (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name NVARCHAR(50) NOT NULL UNIQUE
+);
+
+-- 2. Insert required roles
+INSERT INTO Roles (Name) VALUES ('Admin'), ('User');
+
+-- 3. Add the RoleId column to [User] with a default that matches 'User' role
+ALTER TABLE [User]
+ADD RoleId INT NOT NULL DEFAULT 2;
+
+-- 4. Add the foreign key constraint
+ALTER TABLE [User]
+ADD CONSTRAINT FK_User_Role FOREIGN KEY (RoleId) REFERENCES Roles(Id);
+
+ALTER TABLE Game
+ADD MetacriticScore INT CHECK (MetacriticScore BETWEEN 0 AND 100);
+
+ALTER TABLE Game
+ADD WonGameOfTheYear BIT DEFAULT 0;
+
+CREATE TABLE LogEntry (
+    Id INT PRIMARY KEY IDENTITY,
+    Timestamp DATETIME NOT NULL DEFAULT GETDATE(),
+    Level NVARCHAR(20) NOT NULL,
+    Message NVARCHAR(1000) NOT NULL
+);

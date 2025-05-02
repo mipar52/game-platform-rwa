@@ -24,8 +24,8 @@ namespace game_platform_rwa.Security
                     prf: KeyDerivationPrf.HMACSHA256,
                     iterationCount: 100000,
                     numBytesRequested: 256 / 8);
-            string b64Hash = Convert.ToBase64String(hash);
 
+            string b64Hash = Convert.ToBase64String(hash);
             return b64Hash;
         }
     }

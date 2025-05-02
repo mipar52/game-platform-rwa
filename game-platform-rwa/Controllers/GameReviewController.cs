@@ -1,6 +1,7 @@
 ﻿using game_platform_rwa.DTO_generator;
 using game_platform_rwa.DTOs;
 using game_platform_rwa.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -9,6 +10,7 @@ namespace game_platform_rwa.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class GameReviewController : ControllerBase
     {
         private readonly GamePlatformRwaContext context;
@@ -43,6 +45,7 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("[action]")]
         public IActionResult ApproveReview(int gameId, int userId)
         {
@@ -75,7 +78,7 @@ namespace game_platform_rwa.Controllers
             return Ok("Review updated.");
         }
 
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("[action]")]
         public IActionResult DeleteReview(int gameId, int userId)
         {
