@@ -30,5 +30,29 @@ namespace game_platform_rwa.DTO_generator
 
             };
         }
+
+        public static GenreDto generateGenreDto(Genre genre)
+        {
+            return new GenreDto
+            {
+                Name = genre.Name,
+                GameGenres = genre.GameGenres
+            };
+        }
+
+        public static GameReviewDto generateGameReviewDto(Review review)
+        {
+            return new GameReviewDto
+            {
+                UserId = review.UserId,
+                GameId = review.GameId,
+                Rating = review.Rating,
+                ReviewText = review.ReviewText,
+                Approved = review.Approved,
+                CreatedAt = review.CreatedAt,
+                Game = review.Game,
+                User = review.User
+            };
+        }
     }
 }

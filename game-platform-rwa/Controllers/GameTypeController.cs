@@ -1,4 +1,6 @@
-﻿using game_platform_rwa.Models;
+﻿using game_platform_rwa.DTO_generator;
+using game_platform_rwa.DTOs;
+using game_platform_rwa.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,39 +18,91 @@ public class GameTypeController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<GameType>> GetAll()
     {
-        return Ok(context.GameTypes.ToList());
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var result = context.GameTypes;
+            var mappedResult = result.Select(x => GameDTOGenerator.generateGameTypeDto(x));
+
+            return Ok(mappedResult);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     [HttpGet("{id}")]
-    public ActionResult<GameType> GetById(int id)
+    public ActionResult<GameType> GetGameTypeById(int id)
     {
-        var type = context.GameTypes.Find(id);
-        return type == null ? NotFound() : Ok(type);
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var result =
+                context.GameTypes
+                    .FirstOrDefault(x => x.Id == id);
+
+            var mappedResult = GameDTOGenerator.generateGameTypeDto(result);
+
+            return Ok(mappedResult);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] GameType gameType)
+    public IActionResult CreateGameType([FromBody] GameTypeDto gameType)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
-        context.GameTypes.Add(gameType);
+        var newGameType = new GameType
+        {
+            Name = gameType.Name,
+            Games = gameType.Games.Select(g => new Game
+            {
+                Id = g.Id,
+                Name = g.Name,
+                Description = g.Description,
+                ReleaseDate = g.ReleaseDate,
+                GameUrl = g.GameUrl,
+                GameTypeId = g.GameTypeId
+            }).ToList()
+        };
+
+        context.GameTypes.Add(newGameType);
         context.SaveChanges();
-        return CreatedAtAction(nameof(GetById), new { id = gameType.Id }, gameType);
+
+        return CreatedAtAction(nameof(GetGameTypeById), new { name = newGameType.Name }, new { newGameType.Id });
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] GameType updated)
+    [HttpPut("[action]")]
+    public IActionResult UpdateGameType(int id, [FromBody] GameTypeDto updated)
     {
-        var existing = context.GameTypes.Find(id);
-        if (existing == null) return NotFound();
+        var existing = context.GameTypes.Include(g => updated).FirstOrDefault(g => g.Id == id);
+        if (existing == null) return NotFound($"Genre ID {id} not found");
 
         existing.Name = updated.Name;
+        existing.Games = updated.Games;
+
         context.SaveChanges();
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("[action]")]
+    public IActionResult DeleteGameType(int id)
     {
         var type = context.GameTypes.Include(t => t.Games).FirstOrDefault(t => t.Id == id);
         if (type == null) return NotFound();

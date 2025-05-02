@@ -193,7 +193,7 @@ namespace game_platform_rwa.Controllers
         }
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("[action]")]
         public IActionResult DeleteGame(int id)
         {
             var game = context.Games
