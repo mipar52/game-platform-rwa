@@ -98,7 +98,7 @@ Ovaj materijal je dio Ishoda 2 (minimalno).
 
      ```
      # Authentication using windows user (not in classroom, probably your PC at home)
-     dotnet ef dbcontext scaffold "server=.;Database=Exercise4;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models
+     dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
 
      # If dotnet ef is not available...
      C:\Users\lecturerf6\.dotnet\tools\dotnet-ef.exe dbcontext scaffold ...

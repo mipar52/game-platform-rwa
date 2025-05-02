@@ -25,6 +25,8 @@ public partial class GamePlatformRwaContext : DbContext
 
     public virtual DbSet<Review> Reviews { get; set; }
 
+    public virtual DbSet<Role> Roles { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -111,6 +113,15 @@ public partial class GamePlatformRwaContext : DbContext
                 .HasConstraintName("FK__Review__UserId__5CD6CB2B");
         });
 
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC07C5CFBEC7");
+
+            entity.HasIndex(e => e.Name, "UQ__Roles__737584F6C18EEB33").IsUnique();
+
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__User__3214EC0772760B55");
@@ -122,8 +133,18 @@ public partial class GamePlatformRwaContext : DbContext
             entity.HasIndex(e => e.Email, "UQ__User__A9D10534FA879BAA").IsUnique();
 
             entity.Property(e => e.Email).HasMaxLength(100);
-            entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.FirstName).HasMaxLength(256);
+            entity.Property(e => e.LastName).HasMaxLength(256);
+            entity.Property(e => e.Phone).HasMaxLength(256);
+            entity.Property(e => e.PwdHash).HasMaxLength(256);
+            entity.Property(e => e.PwdSalt).HasMaxLength(256);
+            entity.Property(e => e.RoleId).HasDefaultValue(2);
             entity.Property(e => e.Username).HasMaxLength(100);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_User_Role");
         });
 
         OnModelCreatingPartial(modelBuilder);

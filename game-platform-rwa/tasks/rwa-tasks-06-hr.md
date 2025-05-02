@@ -269,7 +269,7 @@ To je ista stvar koju smo radili u vježbama 4.
     dotnet add package Microsoft.EntityFrameworkCore.Design --version 8
     dotnet add package Microsoft.EntityFrameworkCore.SqlServer --version 8
 
-    dotnet ef dbcontext scaffold "server=.;Database=Exercise6;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
+    dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
     ```
 
 3. Izrežite/zalijepite connection string iz generiranog konteksta baze podataka `Exercise6Context` u `appsettings.json`:

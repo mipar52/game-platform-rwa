@@ -1,6 +1,7 @@
 ﻿using game_platform_rwa.DTO_generator;
 using game_platform_rwa.DTOs;
 using game_platform_rwa.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace game_platform_rwa.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class GameController : ControllerBase
     {
 
@@ -192,7 +194,7 @@ namespace game_platform_rwa.Controllers
             return NoContent();
         }
 
-
+        [Authorize(Roles = "Admin")] // only Admins can delete games
         [HttpDelete("[action]")]
         public IActionResult DeleteGame(int id)
         {
