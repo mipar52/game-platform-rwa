@@ -1,0 +1,4 @@
+Backend:
+- Fix GameGenre n:m relationshipt
+- Better implementation for Genre
+- Add CreateReview in GameReviewController.cs

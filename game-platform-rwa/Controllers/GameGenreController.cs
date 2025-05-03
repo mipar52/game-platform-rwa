@@ -1,8 +1,8 @@
 ﻿using game_platform_rwa.DTO_generator;
 using game_platform_rwa.DTOs;
+using game_platform_rwa.Logger;
 using game_platform_rwa.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,10 +14,12 @@ namespace game_platform_rwa.Controllers
     public class GameGenreController : ControllerBase
     {
         private GamePlatformRwaContext context;
+        private readonly LogService logService;
 
-        public GameGenreController(GamePlatformRwaContext context)
+        public GameGenreController(GamePlatformRwaContext context, LogService logService)
         {
             this.context = context;
+            this.logService = logService;
         }
 
         [HttpGet("[action]")]
@@ -33,15 +35,23 @@ namespace game_platform_rwa.Controllers
                 var result = context.Genres;
                 var mappedResult = result.Select(x => GameDTOGenerator.generateGenreDto(x));
 
+                if (!mappedResult.Any())
+                {
+                    logService.Log($"GetAllGenres requested. No genres found.", "No results");
+                    return NotFound("No genres found.");
+                }
+
+                logService.Log($"GetAllGenres requested. Found {mappedResult.Count()} games.", "Success");
                 return Ok(mappedResult);
             }
             catch (Exception ex)
             {
+                logService.Log($"Failed to get all genres. Error: {ex.Message}", "Error");
                 return StatusCode(500, ex.Message);
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("[action]")]
         public ActionResult<Genre> GetGenreById(int id)
         {
             if (!ModelState.IsValid)
@@ -51,24 +61,27 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result =
-                    context.Genres
-                        .FirstOrDefault(x => x.Id == id);
+                var result = context.Genres.FirstOrDefault(x => x.Id == id);
 
                 if (result == null)
-                    return NotFound($"Could not find game with ID {id}");
+                {
+                    logService.Log($"GetGenreById requested. No genre found with ID {id}.", "No results");
+                    return NotFound($"Could not find genre with ID {id}");
+
+                }
 
                 var mappedResult = GameDTOGenerator.generateGenreDto(result);
-
+                logService.Log($"Genre '{mappedResult.Name}' with id={id} found.");
                 return Ok(mappedResult);
             }
             catch (Exception ex)
             {
+                logService.Log($"Failed to get genre by Id. Error: {ex.Message}", "Error");
                 return StatusCode(500, ex.Message);
             }
         }
 
-        [HttpPost]
+        [HttpPost("[action]")]
         public IActionResult CreateGenre([FromBody] GenreDto genre)
         {
             if (!ModelState.IsValid)
@@ -76,52 +89,92 @@ namespace game_platform_rwa.Controllers
                 return BadRequest(ModelState);
             }
 
-            var newGenre = new Genre
+            try
             {
-                Name = genre.Name,
-                GameGenres = genre.GameGenres.Select(g => new GameGenre
+                var newGenre = new Genre
                 {
-                    GameId = g.GameId,
-                    GenreId = g.GenreId,
-                    AddedOn = DateTime.Now
-                }).ToList()
-            };
+                    Name = genre.Name,
+                    GameGenres = genre.GameGenres.Select(g => new GameGenre
+                    {
+                        GameId = g.GameId,
+                        GenreId = g.GenreId,
+                        AddedOn = DateTime.Now
+                    }).ToList()
+                };
 
-            context.Genres.Add(newGenre);
-            context.SaveChanges();
+                context.Genres.Add(newGenre);
+                context.SaveChanges();
 
-            context.SaveChanges();
+                logService.Log($"Ganre '{newGenre.Name}' with id={newGenre.Id} created.", "Success");
+                return CreatedAtAction(nameof(GetGenreById), new { name = newGenre.Name }, new { newGenre.Id });
 
-            return CreatedAtAction(nameof(GetGenreById), new { name = newGenre.Name }, new { newGenre.Id });
+            } catch (Exception ex)
+            {
+                logService.Log($"Failed to add genre. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
+        [HttpPut("[action]")]
         public IActionResult UpdateGenre(int id, [FromBody] Genre updated)
         {
-            var existing = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
-            if (existing == null) return NotFound($"Genre ID {id} not found");
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var existing = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
+                if (existing == null) return NotFound($"Genre ID {id} not found");
 
-            existing.Name = updated.Name;
-            existing.GameGenres = updated.GameGenres;
+                existing.Name = updated.Name;
+                existing.GameGenres = updated.GameGenres;
 
-            context.SaveChanges();
-            return NoContent();
+                context.SaveChanges();
+                logService.Log($"Genre '{existing.Name}' with id={existing.Id} updated.");
+
+                return NoContent();
+            } catch (Exception ex)
+            {
+                logService.Log($"Failed to update genre. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+
         }
         
         [Authorize(Roles = "Admin")]
         [HttpDelete("[action]")]
         public IActionResult DeleteGenre(int id)
         {
-            var genre = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
-            if (genre == null) return NotFound();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var genre = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
+                if (genre == null)
+                {
+                    logService.Log($"Failed to delete genre with id={id}.", "No results");
+                    return NotFound($"Genre with ID {id} not found.");
+                }
 
-            if (genre.GameGenres.Any())
-                return BadRequest("Cannot delete genre assigned to games.");
+                if (genre.GameGenres.Any())
+                {
+                    logService.Log($"Failed to delete genre with id={id}. Cannot delete genre assigned to games. ", "Error");
+                    return BadRequest("Cannot delete genre assigned to games.");
+                }
 
-            context.Genres.Remove(genre);
-            context.SaveChanges();
-            return NoContent();
+                context.Genres.Remove(genre);
+                context.SaveChanges();
+                logService.Log($"Deleted genre with id={id}. ", "Success");
+                return NoContent();
+            } catch (Exception ex)
+            {
+                logService.Log($"Failed to delete genre with id={id}. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

@@ -35,7 +35,14 @@ namespace game_platform_rwa.Controllers
             {
                 var result = context.Games;
                 var mappedResult = result.Select(x => GameDTOGenerator.generateGameDto(x));
-                logService.Log($"GetAllGames requested. Success");
+
+                if (!mappedResult.Any()) 
+                {
+                  logService.Log($"GetAllGames requested. No games found.", "No results");
+                    return NotFound("No games found.");
+                }
+
+                logService.Log($"GetAllGames requested. Found {mappedResult.Count()} games.", "Success");
                 return Ok(mappedResult);
             }
             catch (Exception ex)
@@ -118,8 +125,9 @@ namespace game_platform_rwa.Controllers
                     logService.Log($"Failed to get games with gameTypeid={gameTypeId}.", "No results");
                     return NotFound($"No games found containing '{gameTypeId}' in the name.");
                 }
-                logService.Log($"Found '{matchingGames.Count}' games with gameTypeId={gameTypeId}.");
+
                 var result = matchingGames.Select(x => GameDTOGenerator.generateGameDto(x));
+                logService.Log($"Found '{result.Count()}' games with gameTypeId={gameTypeId}.");
 
                 return Ok(result);
             }
@@ -194,6 +202,8 @@ namespace game_platform_rwa.Controllers
                         GameId = newGame.Id,
                         GenreId = context.Genres.FirstOrDefault(g => g.Id == genre)?.Id ?? 0,
                     });
+
+                    logService.Log($"Added new Genre with id={genre} when creating the game.");
                 }
                 context.SaveChanges();
 
