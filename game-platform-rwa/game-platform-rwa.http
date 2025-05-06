@@ -1,0 +1,6 @@
+@game_platform_rwa_HostAddress = http://localhost:5062
+
+GET {{game_platform_rwa_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
