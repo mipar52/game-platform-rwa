@@ -17,6 +17,8 @@ public partial class Review
 
     public DateTime? CreatedAt { get; set; }
 
+    public int Id { get; set; }
+
     public virtual Game Game { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;

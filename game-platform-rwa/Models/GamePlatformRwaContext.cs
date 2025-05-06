@@ -110,7 +110,7 @@ public partial class GamePlatformRwaContext : DbContext
 
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.HasKey(e => new { e.UserId, e.GameId }).HasName("PK__Review__D5234533E67AD1C5");
+            entity.HasKey(e => e.Id).HasName("PK_Review_Id");
 
             entity.ToTable("Review");
 

@@ -134,3 +134,24 @@ CREATE TABLE LogEntry (
     Level NVARCHAR(20) NOT NULL,
     Message NVARCHAR(1000) NOT NULL
 );
+
+
+DROP TABLE IF EXISTS GameGameType;
+
+ALTER TABLE Game
+ADD GameTypeId INT NOT NULL;
+
+ALTER TABLE Game
+ADD CONSTRAINT FK_Game_GameType FOREIGN KEY (GameTypeId)
+REFERENCES GameType(Id)
+ON DELETE CASCADE;
+
+UPDATE g
+SET GameTypeId = ggt.GameTypeId
+FROM Game g
+JOIN (
+    SELECT GameId, MIN(GameTypeId) AS GameTypeId
+    FROM GameGameType
+    GROUP BY GameId
+) AS ggt ON g.Id = ggt.GameId;
+

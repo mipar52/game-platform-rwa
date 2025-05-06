@@ -54,6 +54,85 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("[action]")]
+        public ActionResult<IEnumerable<Review>> GetAllReviewsForUser(int userId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var reviews = context.Reviews
+                    .Where(r => r.User.Id == userId)
+                    .ToList();
+
+                if (!reviews.Any())
+                {
+                    logService.Log($"No reviews found for user ID {userId}", "No results");
+                    return NotFound($"No reviews found for user ID {userId}");
+
+                }
+                var result = reviews.Select(x => GameDTOGenerator.generateGameReviewDto(x));
+                logService.Log($"Found {result.Count()} for user with id={userId}", "Success");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Could not get reviews for user with id={userId}. Error {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("[action]")]
+        public IActionResult CreateReview([FromBody] GameReviewCreateDto review)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var newReview = new Review
+                {
+                    UserId = review.UserId,
+                    GameId = review.GameId,
+                    Rating = review.Rating,
+                    ReviewText = review.ReviewText,
+                    Approved = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Reviews.Add(newReview);
+
+                var game = context.Games.FirstOrDefault(g => g.Id == review.GameId);
+                if (game == null)
+                {
+                    logService.Log($"Game with id={review.GameId} not found", "No results");
+                    return NotFound("Game not found.");
+                }
+
+                game.Reviews.Add(newReview);
+
+                var user = context.Users.FirstOrDefault(u => u.Id == review.UserId);
+                if (user == null)
+                {
+                    logService.Log($"User with id={review.UserId} not found", "No results");
+                    return NotFound("User not found.");
+                }
+                user.Reviews.Add(newReview);
+
+                context.SaveChanges();
+                logService.Log($"Created a new review for game with id={review.GameId}", "Success");
+                return CreatedAtAction(nameof(GetAllReviewsForGame), new { gameId = review.GameId }, review);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Could not create a new review for game with id={review.GameId}. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost("[action]")]
         public IActionResult ApproveReview(int gameId, int userId)
@@ -84,7 +163,7 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpPut("[action]")]
-        public IActionResult UpdateReview(int gameId, int userId, [FromBody] GameReviewDto updated)
+        public IActionResult UpdateReview(int gameId, int userId, [FromBody] GameReviewCreateDto updated)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

@@ -5,7 +5,8 @@ namespace game_platform_rwa.DTO_generator
 {
     public static class GameDTOGenerator
     {
-        public static GameDto generateGameDto(Game game)
+
+    public static GameDto generateGameDto(Game game)
         {
             return new GameDto
             {
@@ -14,20 +15,35 @@ namespace game_platform_rwa.DTO_generator
                 Description = game.Description,
                 ReleaseDate = game.ReleaseDate,
                 GameUrl = game.GameUrl,
-                GameTypeId = game.GameTypeId,
-                GameType = game.GameType,
-                Reviews = game.Reviews,
-              //  Genres = game.GameGenres
+                GameType = game.GameType?.Name ?? "Unknown",
+                MetacriticScore = game.MetacriticScore,
+                WonGameOfTheYear = game.WonGameOfTheYear ?? false,
+
+                Genres = game.GameGenres?
+                    .Select(gg => generateGenreDto(gg.Genre))
+                    .ToList() ?? new List<GenreDto>(),
+
+                Reviews = game.Reviews?
+                    .Select(r => new GameReviewDto
+                    {
+                        Id = r.Id,
+                        UserId = r.UserId,
+                        Rating = r.Rating,
+                        ReviewText = r.ReviewText,
+                        Approved = r.Approved,
+                        CreatedAt = r.CreatedAt
+                    })
+                    .ToList() ?? new List<GameReviewDto>()
             };
         }
+        
+
         public static GameTypeDto generateGameTypeDto(GameType gameType)
         {
             return new GameTypeDto
             {
                 Id = gameType.Id,
                 Name = gameType.Name,
-                Games = gameType.Games
-
             };
         }
 
@@ -35,8 +51,8 @@ namespace game_platform_rwa.DTO_generator
         {
             return new GenreDto
             {
+                Id = genre.Id,
                 Name = genre.Name,
-                GameGenres = genre.GameGenres
             };
         }
 
@@ -50,8 +66,6 @@ namespace game_platform_rwa.DTO_generator
                 ReviewText = review.ReviewText,
                 Approved = review.Approved,
                 CreatedAt = review.CreatedAt,
-                Game = review.Game,
-                User = review.User
             };
         }
     }

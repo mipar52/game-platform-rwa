@@ -33,7 +33,11 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.Games;
+                var result = context.Games
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.Reviews);
+
                 var mappedResult = result.Select(x => GameDTOGenerator.generateGameDto(x));
 
                 if (!mappedResult.Any()) 
@@ -53,29 +57,6 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<GameDto>> GetGamesWithGenre(int genreId)
-        {
-            var games = context.GameGenres
-                .Include(gg => gg.Game)
-                .Where(gg => gg.GenreId == genreId)
-                .Select(gg => gg.Game)
-                .Distinct()
-                .ToList();
-
-            if (!games.Any())
-            {
-                logService.Log($"Failed to get game with genre={genreId}.", "No results");
-                return NotFound($"No games found with genre ID {genreId}");
-
-            }
-
-            var result = games.Select(g => GameDTOGenerator.generateGameDto(g));
-            logService.Log($"Found '{games.Count}' games with genre id={genreId}.");
-            return Ok(result);
-        }
-
-
-        [HttpGet("[action]")]
         public ActionResult<GameDto> GetGameById(int id)
         {
             if (!ModelState.IsValid)
@@ -85,9 +66,11 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result =
-                    context.Games
-                        .FirstOrDefault(x => x.Id == id);
+                var result = context.Games
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.Reviews)
+                    .FirstOrDefault(x => x.Id == id);
 
                 if (result == null)
                 {
@@ -106,39 +89,9 @@ namespace game_platform_rwa.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
-        [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Game>> GetGamesWithGameType(int gameTypeId)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            try
-            {
-                var matchingGames = context.Games
-                    .Where(game => game.GameTypeId == gameTypeId)
-                    .ToList();
-
-                if (!matchingGames.Any())
-                {
-                    logService.Log($"Failed to get games with gameTypeid={gameTypeId}.", "No results");
-                    return NotFound($"No games found containing '{gameTypeId}' in the name.");
-                }
-
-                var result = matchingGames.Select(x => GameDTOGenerator.generateGameDto(x));
-                logService.Log($"Found '{result.Count()}' games with gameTypeId={gameTypeId}.");
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                logService.Log($"Failed to GetGamesWithGameType with id={gameTypeId}. Error: {ex.Message}", "Error");
-                return BadRequest($"Could not find any games with the game type ID {gameTypeId}!");
-            }
-        }
-
-        [HttpGet("[action]")]
+        
+         
+                 [HttpGet("[action]")]
         public ActionResult<IEnumerable<Game>> GetGamesWithName(string name)
         {
             if (!ModelState.IsValid)
@@ -168,9 +121,8 @@ namespace game_platform_rwa.Controllers
             }
         }
 
-
         [HttpPost("[action]")]
-        public ActionResult<GameCreateDto> AddGame([FromBody] GameCreateDto game)
+        public ActionResult<GameCreateDto> CreateGame([FromBody] GameCreateDto game)
         {
             if (!ModelState.IsValid)
             {
@@ -187,12 +139,9 @@ namespace game_platform_rwa.Controllers
                     GameUrl = game.GameUrl,
                     GameTypeId = game.GameTypeId,
                     MetacriticScore = (int)game.MetaCriticScore,
-                    WonGameOfTheYear = game.GameOfTheYearAward
-
+                    WonGameOfTheYear = game.GameOfTheYearAward,
                 };
 
-                context.Games.Add(newGame);
-                context.SaveChanges();
                 logService.Log($"Game '{newGame.Name}' with id={newGame.Id} created.");
 
                 foreach (var genre in game.GenreIds)
@@ -200,14 +149,24 @@ namespace game_platform_rwa.Controllers
                     context.GameGenres.Add(new GameGenre
                     {
                         GameId = newGame.Id,
-                        GenreId = context.Genres.FirstOrDefault(g => g.Id == genre)?.Id ?? 0,
+                        Game = newGame,
+                        GenreId = genre,
+                        Genre = context.Genres.FirstOrDefault(g => g.Id == genre) ?? new Genre { Id = genre, Name = "Unknown" }
                     });
 
                     logService.Log($"Added new Genre with id={genre} when creating the game.");
                 }
-                context.SaveChanges();
 
-                return CreatedAtAction(nameof(GetGamesWithName), new { name = newGame.Name }, new { newGame.Id });
+                // adding the newly added game to its gameType
+                var gameTypes = context.GameTypes.FirstOrDefault(x => x.Id == newGame.GameTypeId);
+                if (gameTypes != null)
+                {
+                    gameTypes.Games.Add(newGame);
+                }
+
+               context.SaveChanges();
+
+                return CreatedAtAction(nameof(GetGameById), new { name = newGame.Name }, new { newGame.Id });
             }
             catch (Exception ex)
             {
@@ -277,10 +236,15 @@ namespace game_platform_rwa.Controllers
                 // Removal of related many-to-many and one-to-many entries
                 context.Reviews.RemoveRange(game.Reviews);
                 context.GameGenres.RemoveRange(game.GameGenres);
+                var gameTypes = context.GameTypes.FirstOrDefault(x => x.Games.Contains(game));
+                if (gameTypes != null)
+                {
+                    gameTypes.Games.Remove(game);
+                }
                 context.Games.Remove(game);
 
                 context.SaveChanges();
-                logService.Log($"Game '{game.Name}' with id={game.Id} delete.");
+                logService.Log($"Game '{game.Name}' with id={game.Id} deleted.");
 
                 return NoContent(); 
             }

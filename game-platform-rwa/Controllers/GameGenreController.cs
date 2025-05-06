@@ -67,7 +67,6 @@ namespace game_platform_rwa.Controllers
                 {
                     logService.Log($"GetGenreById requested. No genre found with ID {id}.", "No results");
                     return NotFound($"Could not find genre with ID {id}");
-
                 }
 
                 var mappedResult = GameDTOGenerator.generateGenreDto(result);
@@ -81,8 +80,48 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("[action]")]
+        public ActionResult<IEnumerable<GameDto>> GetGamesWithGenre(int genreId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var gameIds = context.GameGenres
+                    .Where(gg => gg.GenreId == genreId)
+                    .Select(gg => gg.GameId)
+                    .Distinct()
+                    .ToList();
+
+                var games = context.Games
+                    .Where(g => gameIds.Contains(g.Id))
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.Reviews)
+                    .ToList();
+
+                if (!games.Any())
+                {
+                    logService.Log($"Failed to get game with genre={genreId}.", "No results");
+                    return NotFound($"No games found with genre ID {genreId}");
+                }
+
+                var result = games.Select(g => GameDTOGenerator.generateGameDto(g)).ToList();
+                logService.Log($"Found '{result.Count}' games with genre id={genreId}.");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Failed to get games with genre id={genreId}. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpPost("[action]")]
-        public IActionResult CreateGenre([FromBody] GenreDto genre)
+        public IActionResult CreateGenre([FromBody] GenreCreateDto genre)
         {
             if (!ModelState.IsValid)
             {
@@ -93,13 +132,7 @@ namespace game_platform_rwa.Controllers
             {
                 var newGenre = new Genre
                 {
-                    Name = genre.Name,
-                    GameGenres = genre.GameGenres.Select(g => new GameGenre
-                    {
-                        GameId = g.GameId,
-                        GenreId = g.GenreId,
-                        AddedOn = DateTime.Now
-                    }).ToList()
+                    Name = genre.Name
                 };
 
                 context.Genres.Add(newGenre);
@@ -117,7 +150,7 @@ namespace game_platform_rwa.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("[action]")]
-        public IActionResult UpdateGenre(int id, [FromBody] Genre updated)
+        public IActionResult UpdateGenre(int id, [FromBody] GenreCreateDto updated)
         {
             if (!ModelState.IsValid)
             {
@@ -129,12 +162,17 @@ namespace game_platform_rwa.Controllers
                 if (existing == null) return NotFound($"Genre ID {id} not found");
 
                 existing.Name = updated.Name;
-                existing.GameGenres = updated.GameGenres;
+
+                context.GameGenres.RemoveRange(existing.GameGenres);
+                foreach (var genre in existing.GameGenres)
+                {
+                    context.GameGenres.Add(new GameGenre { GameId = id, GenreId = context.Genres.FirstOrDefault(g => g.Id == existing.Id)?.Id ?? 0 });
+                }
 
                 context.SaveChanges();
                 logService.Log($"Genre '{existing.Name}' with id={existing.Id} updated.");
 
-                return NoContent();
+                return CreatedAtAction(nameof(GetGenreById), new { name = updated.Name }, new { existing.Id });
             } catch (Exception ex)
             {
                 logService.Log($"Failed to update genre. Error: {ex.Message}", "Error");
@@ -159,6 +197,9 @@ namespace game_platform_rwa.Controllers
                     logService.Log($"Failed to delete genre with id={id}.", "No results");
                     return NotFound($"Genre with ID {id} not found.");
                 }
+
+                //var gameGenres = context.GameGenres.Where(gg => gg.GenreId == id);
+                //context.GameGenres.RemoveRange(gameGenres);
 
                 if (genre.GameGenres.Any())
                 {

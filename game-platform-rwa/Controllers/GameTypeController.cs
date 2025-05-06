@@ -75,8 +75,50 @@ public class GameTypeController : ControllerBase
         }
     }
 
+    [HttpGet("[action]")] 
+    public ActionResult<IEnumerable<GameDto>> GetGamesWithGameType(int id)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            var gameType = context.GameTypes
+            .FirstOrDefault(gt => gt.Id == id);
+            if (gameType == null)
+            {
+                logService.Log($"Could not find game type with id={id}", "No results");
+                return NotFound($"Could not find game type with id {id}");
+            }
+            var games = context.Games
+                .Where(g => g.GameTypeId == gameType.Id)
+                .Include(g => g.GameType)
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.Reviews)
+                .ToList();
+
+
+            if (games == null)
+            {
+                logService.Log($"Could not find any games with game type id={id}", "No results");
+                return NotFound($"Could not find any games with game type id{id}");
+            }
+
+            var mappedResult = games.Select(x => GameDTOGenerator.generateGameDto(x));
+            logService.Log($"Found {mappedResult.Count()} games with GameType id={id}.", "Success");
+            Console.WriteLine($"Found {mappedResult.Count()} games with GameType id={id}.");
+            return Ok(mappedResult);
+        }
+        catch (Exception ex)
+        {
+            logService.Log($"Could not get games with GameType id={id}. Error: {ex.Message}", "Error");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpPost("[action]")]
-    public IActionResult CreateGameType([FromBody] GameTypeDto gameType)
+    public IActionResult CreateGameType([FromBody] GameTypeCreateDto gameType)
     {
         if (!ModelState.IsValid)
         {
@@ -86,16 +128,7 @@ public class GameTypeController : ControllerBase
         {
             var newGameType = new GameType
             {
-                Name = gameType.Name,
-                Games = gameType.Games.Select(g => new Game
-                {
-                    Id = g.Id,
-                    Name = g.Name,
-                    Description = g.Description,
-                    ReleaseDate = g.ReleaseDate,
-                    GameUrl = g.GameUrl,
-                    GameTypeId = g.GameTypeId
-                }).ToList()
+                Name = gameType.Name
             };
 
             context.GameTypes.Add(newGameType);
@@ -105,7 +138,7 @@ public class GameTypeController : ControllerBase
             return CreatedAtAction(nameof(GetGameTypeById), new { name = newGameType.Name }, new { newGameType.Id });
         } catch (Exception ex)
         {
-            logService.Log($"Error with creating new GameType with id={gameType.Id}. Error: {ex.Message}", "Error");
+            logService.Log($"Error with creating new GameType with name={gameType.Name}. Error: {ex.Message}", "Error");
             return StatusCode(500, ex.Message);
         }
 
@@ -128,7 +161,6 @@ public class GameTypeController : ControllerBase
             }
 
             existing.Name = updated.Name;
-            existing.Games = updated.Games;
 
             context.SaveChanges();
             logService.Log($"Updated GameType with id={updated.Id}", "Success");
