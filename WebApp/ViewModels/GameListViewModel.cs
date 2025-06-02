@@ -6,7 +6,7 @@
         public string Name { get; set; }
         public string Description { get; set; }
         public string GenreName { get; set; }
-        public string TypeName { get; set; }
+        public GameTypeViewModel GameType { get; set; }
         // Add more fields as needed
     }
 

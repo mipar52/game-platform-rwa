@@ -25,10 +25,15 @@ namespace WebApp.Controllers
 
             var viewModel = games.Select(g => new GameListViewModel
             {
+                Id = g.Id,
                 Name = g.Name,
                 Description = g.Description,
                 GenreName = string.Join(", ", g.Genres.Select(x => x.Name)),
-                TypeName = g.GameType
+                GameType = new GameTypeViewModel
+                {
+                    Id = g.GameType.Id,
+                    Name = g.GameType.Name
+                }
             }).ToList();
 
             return View(viewModel);

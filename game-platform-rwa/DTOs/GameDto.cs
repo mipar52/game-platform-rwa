@@ -10,7 +10,7 @@ namespace game_platform_rwa.DTOs
         public string? Description { get; set; }
         public DateOnly? ReleaseDate { get; set; }
         public string? GameUrl { get; set; }
-        public string GameType { get; set; } = "";
+        public GameTypeDto GameType { get; set; }
         public int? MetacriticScore { get; set; }
         public bool WonGameOfTheYear { get; set; }
         public IEnumerable<GenreDto> Genres { get; set; } = new List<GenreDto>();

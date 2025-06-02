@@ -15,7 +15,11 @@ namespace game_platform_rwa.DTO_generator
                 Description = game.Description,
                 ReleaseDate = game.ReleaseDate,
                 GameUrl = game.GameUrl,
-                GameType = game.GameType?.Name ?? "Unknown",
+                GameType = new GameTypeDto
+                {
+                    Id = game.GameType.Id,
+                    Name = game.GameType.Name
+                },
                 MetacriticScore = game.MetacriticScore,
                 WonGameOfTheYear = game.WonGameOfTheYear ?? false,
 
