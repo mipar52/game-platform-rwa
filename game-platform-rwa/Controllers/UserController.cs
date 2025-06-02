@@ -101,7 +101,7 @@ namespace game_platform_rwa.Controllers
             }
         }
         [HttpPost("[action]")]
-        public ActionResult Login(LoginUserDto userDto)
+        public ActionResult Login([FromBody]LoginUserDto userDto)
         {
             if (!ModelState.IsValid)
             {

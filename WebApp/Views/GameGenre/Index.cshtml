@@ -1,0 +1,22 @@
+﻿@model List<WebApp.ViewModels.GameGenreViewModel>
+@{
+    ViewData["Title"] = "Genres";
+}
+
+<h2 class="neon-text text-center mb-4">Select a Genre</h2>
+
+<div class="row justify-content-center">
+    @foreach (var genre in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark text-light border-danger shadow">
+                <div class="card-body text-center">
+                    <h5 class="card-title">@genre.Name</h5>
+                    <a asp-controller="Game" asp-action="Index" asp-route-genreId="@genre.Id" class="btn btn-danger mt-2">
+                        Browse Games
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

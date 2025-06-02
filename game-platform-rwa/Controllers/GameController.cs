@@ -121,6 +121,51 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("[action]")]
+        public ActionResult<IEnumerable<GameDto>> GetGamesByTypeAndGenres(int gameTypeId, [FromQuery] List<int> genreIds)
+        {
+            if (!ModelState.IsValid || genreIds == null || !genreIds.Any())
+            {
+                return BadRequest("You must provide at least one genre ID.");
+            }
+
+            try
+            {
+                // Get game IDs that have at least one of the specified genres
+                var matchingGameIds = context.GameGenres
+                    .Where(gg => genreIds.Contains(gg.GenreId))
+                    .Select(gg => gg.GameId)
+                    .Distinct()
+                    .ToList();
+
+                // Get games that match the GameType AND one of the specified genres
+                var games = context.Games
+                    .Where(g => g.GameTypeId == gameTypeId && matchingGameIds.Contains(g.Id))
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.Reviews)
+                    .ToList();
+
+                if (!games.Any())
+                {
+                    logService.Log($"No games found with GameTypeId={gameTypeId} and Genres={string.Join(",", genreIds)}.", "No Results");
+                    return NotFound("No games matched the selected filters.");
+                }
+
+                var result = games.Select(g => GameDTOGenerator.generateGameDto(g)).ToList();
+                logService.Log($"Found {result.Count} games for GameTypeId={gameTypeId} and Genres={string.Join(",", genreIds)}.", "Success");
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error getting games by type and genres: {ex.Message}", "Error");
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
+
+
+
         [HttpPost("[action]")]
         public ActionResult<GameCreateDto> CreateGame([FromBody] GameCreateDto game)
         {

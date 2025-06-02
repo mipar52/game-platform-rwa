@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Welcome to the Arena";
+}
+<link rel="stylesheet" href="~/css/home.css" />
+
+<div class="home-wrapper">
+    <div class="overlay-text">
+        <h1 class="main-title">Welcome, Warrior</h1>
+        <p class="subtitle">Prepare for battle — your destiny awaits.</p>
+        <a href="/Logs/Index" class="btn action-btn">View Battle Logs</a>
+        <a asp-controller="GameType" asp-action="Index" class="action-btn">Browse Games</a>
+    </div>
+    <audio autoplay loop hidden>
+        <source src="https://example.com/aatrox-theme.mp3" type="audio/mpeg">
+    </audio>
+
+</div>

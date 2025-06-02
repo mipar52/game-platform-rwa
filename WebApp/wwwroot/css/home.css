@@ -1,0 +1,88 @@
+﻿/* Home background with Aatrox theme */
+.home-wrapper {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+}
+
+    /* Dark red overlay for dramatic mood */
+.home-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+/* Text on top of overlay */
+.overlay-text {
+    z-index: 2;
+    max-width: 800px;
+    padding: 30px;
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 60, 60, 0.4);
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Title styling - aggressive red glow */
+.main-title {
+    font-size: 70px;
+    font-weight: 700;
+    color: #ff2c2c;
+    text-shadow: 0 0 15px #ff2c2c, 0 0 30px #6e0000, 0 0 40px #6e0000;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+}
+
+/* Subtitle styling */
+.subtitle {
+    font-size: 22px;
+    color: #ddd;
+    margin-bottom: 45px;
+    text-shadow: 0 0 5px #990000;
+}
+
+/* Action buttons styled like game HUD */
+.action-btn {
+    background: linear-gradient(to right, #ff2c2c, #6e0000);
+    color: #fff;
+    border: 2px solid #ff2c2c;
+    padding: 14px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 8px;
+    box-shadow: 0 0 12px #ff2c2c;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin: 0 10px;
+    text-transform: uppercase;
+}
+
+    .action-btn:hover {
+        background: linear-gradient(to right, #990000, #ff0000);
+        box-shadow: 0 0 25px #ff0000, 0 0 35px #990000;
+        transform: scale(1.05);
+    }
+body::before {
+
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYXI1OG5vd2E1cmhncXgwN3Vlcm1rZXFwcHliazBseTM2cmdocjM0ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/bZXdUtyQ6Ai7POa3aI/giphy.gif') no-repeat center center/cover !important;
+    opacity: 0.25;
+    z-index: -1;
+    pointer-events: none;
+}

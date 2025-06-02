@@ -155,3 +155,14 @@ JOIN (
     GROUP BY GameId
 ) AS ggt ON g.Id = ggt.GameId;
 
+alter table Game
+drop column GameType
+
+SELECT * FROM sys.key_constraints WHERE [parent_object_id] = OBJECT_ID('Review');
+
+ALTER TABLE Review DROP CONSTRAINT PK__Review__D5234533E67AD1C5; -- Use your actual PK name
+
+ALTER TABLE Review ADD Id INT IDENTITY(1,1);
+
+ALTER TABLE Review ADD CONSTRAINT PK_Review_Id PRIMARY KEY (Id);
+

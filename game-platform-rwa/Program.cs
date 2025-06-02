@@ -74,6 +74,11 @@ builder.Services.AddSwaggerGen(option =>
         });
 });
 
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

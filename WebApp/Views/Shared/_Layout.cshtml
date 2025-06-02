@@ -1,0 +1,81 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    var isLoggedIn = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") != null;
+    var username = HttpContextAccessor.HttpContext?.Session.GetString("Username");
+    var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
+    var isLoginPage = currentPath.Contains("/login");
+    @Html.AntiForgeryToken()
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebApp.styles.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
+
+    <script src="~/js/logout.js" asp-append-version="true"></script>
+
+</head>
+<body class="@(isLoginPage ? "login-page" : "")">
+    <header>
+        @if (isLoggedIn && !isLoginPage)
+        {
+            <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+                <div class="container">
+                    <a class="navbar-brand" asp-controller="Home" asp-action="Index">Game Platform RWA</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarContent">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Privacy">Privacy</a>
+                            </li>
+                        </ul>
+
+                        <ul class="navbar-nav ms-auto align-items-center">
+                            <li class="nav-item">
+                                <span class="user-greeting me-2 text-light" style="font-family: 'Orbitron'; font-weight: 500;">
+                                    Hello, @username!
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form method="post" asp-controller="Login" asp-action="Logout" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        }
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted mt-3">
+        <div class="container">
+            &copy; 2025 - GamePlatform RWA
+        </div>
+    </footer>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -52,7 +52,7 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<Genre> GetGenreById(int id)
+        public ActionResult<GenreDto> GetGenreById(int id)
         {
             if (!ModelState.IsValid)
             {
@@ -81,17 +81,18 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<GameDto>> GetGamesWithGenre(int genreId)
+        public ActionResult<IEnumerable<GameDto>> GetGamesWithGenres([FromQuery] List<int> genreIds)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid || genreIds == null || !genreIds.Any())
             {
-                return BadRequest(ModelState);
+                return BadRequest("No genre IDs provided.");
             }
 
             try
             {
+                // Get games that match at least one of the selected genres
                 var gameIds = context.GameGenres
-                    .Where(gg => gg.GenreId == genreId)
+                    .Where(gg => genreIds.Contains(gg.GenreId))
                     .Select(gg => gg.GameId)
                     .Distinct()
                     .ToList();
@@ -105,20 +106,21 @@ namespace game_platform_rwa.Controllers
 
                 if (!games.Any())
                 {
-                    logService.Log($"Failed to get game with genre={genreId}.", "No results");
-                    return NotFound($"No games found with genre ID {genreId}");
+                    logService.Log($"No games found with genre IDs: {string.Join(",", genreIds)}", "No results");
+                    return NotFound("No games matched the selected genres.");
                 }
 
                 var result = games.Select(g => GameDTOGenerator.generateGameDto(g)).ToList();
-                logService.Log($"Found '{result.Count}' games with genre id={genreId}.");
+                logService.Log($"Found {result.Count} games with genre IDs: {string.Join(",", genreIds)}", "Success");
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                logService.Log($"Failed to get games with genre id={genreId}. Error: {ex.Message}", "Error");
+                logService.Log($"Error retrieving games with genres {string.Join(",", genreIds)}: {ex.Message}", "Error");
                 return StatusCode(500, ex.Message);
             }
         }
+
 
         [HttpPost("[action]")]
         public IActionResult CreateGenre([FromBody] GenreCreateDto genre)

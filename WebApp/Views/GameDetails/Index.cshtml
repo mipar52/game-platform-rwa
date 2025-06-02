@@ -1,0 +1,62 @@
+﻿@model WebApp.ViewModels.GameDetailsViewModel
+
+@{
+    ViewData["Title"] = "Game Details"; //Model?.Name ??
+}
+
+<div class="container mt-5">
+    <h1 class="text-danger">@Model.Name</h1>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <p><strong>Description:</strong> @Model.Description</p>
+            <p><strong>Release Date:</strong> @Model.ReleaseDate.ToString("yyyy-MM-dd")</p>
+            <p><strong>Game Type:</strong> @Model.GameType?.Name</p>
+            <p><strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))</p>
+            <p><strong>Metacritic Score:</strong> @(Model.MetacriticScore?.ToString() ?? "N/A")</p>
+            <p><strong>Won Game of the Year:</strong> @(Model.WonGameOfTheYear ? "Yes" : "No")</p>
+            <p><strong>Official Page:</strong> <a href="@Model.GameUrl" target="_blank">@Model.GameUrl</a></p>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <h3>User Reviews</h3>
+
+            @if (Model.Reviews?.Any() == true)
+            {
+                foreach (var review in Model.Reviews)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Rating: @review.Rating/10</h5>
+                            <p class="card-text">@review.ReviewText</p>
+                            <small class="text-muted">Posted: @review.CreatedAt.ToString("g")</small>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>No reviews yet. Be the first to add one!</p>
+            }
+
+            <hr />
+            <h4>Add a Review</h4>
+            <form asp-action="AddComment" asp-controller="GameDetails" method="post">
+                <input type="hidden" name="GameId" value="@Model.Id" />
+                <div class="form-group">
+                    <label for="Rating">Rating (1-10)</label>
+                    <input type="number" class="form-control" name="Rating" min="1" max="10" required />
+                </div>
+                <div class="form-group mt-2">
+                    <label for="ReviewText">Your Review</label>
+                    <textarea class="form-control" name="ReviewText" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger mt-3">Submit Review</button>
+            </form>
+        </div>
+    </div>
+</div>
