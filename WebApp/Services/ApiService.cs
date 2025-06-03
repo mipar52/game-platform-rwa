@@ -1,4 +1,7 @@
-﻿using System.Net.Http.Headers;
+﻿using System;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using WebApp.Models;
 using WebApp.Utilities;
@@ -69,15 +72,67 @@ namespace WebApp.Services
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-                DebugHelper.PrintDebugMessage("[WebApp] - JSON: " + json);
+                DebugHelper.PrintDebugMessage("JSON: " + json);
                 return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
 
-            DebugHelper.PrintDebugMessage($"[WebApp] - Request to {uri} failed with status: {response.StatusCode}");
+            DebugHelper.PrintDebugMessage($"Request to {uri} failed with status: {response.StatusCode}");
             return default;
         }
 
-        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NDg4OTA4NjksImV4cCI6MTc0ODg5ODA2OSwiaWF0IjoxNzQ4ODkwODY5fQ.RPzFeubncVE_5by6ZScU0BHkToZHMDetkLeJP2iquxc
+        public async Task<HttpResponseMessage> PostAsync<T>(string uri, T data)
+        {
+            var client = _httpClientFactory.CreateClient();
+            var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var json = JsonSerializer.Serialize(data);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var fullUri = $"{_baseUrl}{uri}";
+            DebugHelper.PrintDebugMessage($"Posting to: {fullUri}");
+            DebugHelper.PrintDebugMessage($"Payload: {json}");
+
+            return await client.PostAsync(fullUri, content);
+        }
+
+        public async Task<HttpResponseMessage> PutWithResponseAsync<T>(string uri, T data)
+        {
+            var client = _httpClientFactory.CreateClient();
+            var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var json = JsonSerializer.Serialize(data);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var fullUri = $"{_baseUrl}{uri}";
+            DebugHelper.PrintDebugMessage($"Posting to: {fullUri}");
+            DebugHelper.PrintDebugMessage($"Payload: {json}");
+
+            return await client.PutAsync(fullUri, content);
+        }
+        public async Task<HttpResponseMessage> DeleteAsync(string uri)
+        {
+            var client = _httpClientFactory.CreateClient();
+            var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var fullUri = $"{_baseUrl}{uri}";
+            DebugHelper.PrintDebugMessage($"Sending DELETE to: {fullUri}");
+
+            return await client.DeleteAsync(fullUri);
+        }
+
     }
 
 }

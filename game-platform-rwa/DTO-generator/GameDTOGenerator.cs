@@ -1,5 +1,6 @@
 ﻿using game_platform_rwa.DTOs;
 using game_platform_rwa.Models;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace game_platform_rwa.DTO_generator
 {
@@ -65,6 +66,21 @@ namespace game_platform_rwa.DTO_generator
             return new GameReviewDto
             {
                 UserId = review.UserId,
+                GameId = review.GameId,
+                Rating = review.Rating,
+                ReviewText = review.ReviewText,
+                Approved = review.Approved,
+                CreatedAt = review.CreatedAt,
+            };
+        }
+
+        public static UserGameReviewDto generateUserGameReviewDto(Review review)
+        {
+            return new UserGameReviewDto
+            {
+                Id = review.Id,
+                UserId = review.UserId,
+                GameName = review.Game.Name,
                 GameId = review.GameId,
                 Rating = review.Rating,
                 ReviewText = review.ReviewText,

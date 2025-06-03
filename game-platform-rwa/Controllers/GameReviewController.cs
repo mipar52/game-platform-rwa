@@ -4,6 +4,7 @@ using game_platform_rwa.Logger;
 using game_platform_rwa.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -55,7 +56,7 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Review>> GetAllReviewsForUser(int userId)
+        public ActionResult<IEnumerable<UserGameReviewDto>> GetAllReviewsForUser(int userId)
         {
             if (!ModelState.IsValid)
             {
@@ -64,19 +65,23 @@ namespace game_platform_rwa.Controllers
 
             try
             {
+                // Get all reviews for user including game info in a single query
                 var reviews = context.Reviews
-                    .Where(r => r.User.Id == userId)
+                    .Include(r => r.Game)
+                    .Where(r => r.UserId == userId)
                     .ToList();
 
                 if (!reviews.Any())
                 {
                     logService.Log($"No reviews found for user ID {userId}", "No results");
                     return NotFound($"No reviews found for user ID {userId}");
-
                 }
-                var result = reviews.Select(x => GameDTOGenerator.generateGameReviewDto(x));
-                logService.Log($"Found {result.Count()} for user with id={userId}", "Success");
-                return Ok(result);
+
+                // Map to DTO and assign game name directly
+                var gameReviews = reviews.Select(r => GameDTOGenerator.generateUserGameReviewDto(r));
+
+                logService.Log($"Found {gameReviews.Count()} reviews for user with id={userId}", "Success");
+                return Ok(gameReviews);
             }
             catch (Exception ex)
             {

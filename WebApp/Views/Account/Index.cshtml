@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Account Settings";
+}
+
+<h2 class="text-danger">Account Settings</h2>
+<p>Here you can manage your profile and preferences.</p>
+
+<div class="container mt-5">
+    <h2 class="text-danger mb-4">Account Settings</h2>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <a asp-controller="Account" asp-action="Manage" class="btn btn-outline-danger btn-lg w-100">
+                Manage Account Information
+            </a>
+        </div>
+        <div class="col-md-6 mb-3">
+            <a asp-controller="Account" asp-action="Reviews" class="btn btn-outline-warning btn-lg w-100">
+                Manage My Reviews
+            </a>
+        </div>
+    </div>
+</div>
+

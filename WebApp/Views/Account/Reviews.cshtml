@@ -1,0 +1,53 @@
+﻿@model List<WebApp.ViewModels.UserReviewViewModel>
+
+@{
+    ViewData["Title"] = "Manage My Reviews";
+}
+
+<h2>My Reviews</h2>
+
+@if (!Model.Any())
+{
+    <p>You haven't written any reviews yet.</p>
+}
+else
+{
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <table class="table table-dark table-bordered">
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Content</th>
+                <th>Rating</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var review in Model)
+            {
+                <tr>
+                    <td>@review.GameName</td>
+                    <td>@review.ReviewText</td>
+                    <td>@review.Rating</td>
+                    <td>@review.CreatedAt.ToShortDateString()</td>
+                    <td>
+                        <form asp-action="DeleteReview" method="post">
+                            <input type="hidden" name="id" value="@review.Id" />
+                            <input type="hidden" name="userId" value="@review.UserId" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

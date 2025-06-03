@@ -32,7 +32,7 @@ namespace WebApp.Controllers
             var json = JsonSerializer.Serialize(loginModel, new JsonSerializerOptions { PropertyNamingPolicy = null });
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("http://localhost:5062/Login", content);
+            var response = await client.PostAsync("http://localhost:5062/api/User/Login", content);
             DebugHelper.PrintDebugMessage($"Login Status: {response.IsSuccessStatusCode}");
 
             if (response.IsSuccessStatusCode)
@@ -40,7 +40,6 @@ namespace WebApp.Controllers
                 var token = await response.Content.ReadAsStringAsync();
                 HttpContext.Session.SetString("JwtToken", token);
                 HttpContext.Session.SetString("Username", loginModel.Username);
-                HttpContext.Session.SetString("UserId", 1.ToString());
                 return RedirectToAction("Index", "Home");
 
             }

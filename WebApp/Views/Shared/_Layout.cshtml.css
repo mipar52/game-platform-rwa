@@ -63,13 +63,12 @@ button.accept-policy {
 }
 
 .footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    line-height: 60px;
+    position: sticky;
+    top: 100vh;
     background-color: #0a0a0a;
     color: #888;
     border-top: 1px solid #2e2e2e;
     text-align: center;
+    padding: 1rem 0;
+    z-index: 100;
 }

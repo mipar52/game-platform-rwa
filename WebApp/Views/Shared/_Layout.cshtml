@@ -16,15 +16,16 @@
     <title>@ViewData["Title"]</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/WebApp.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
 
     <script src="~/js/logout.js" asp-append-version="true"></script>
 
 </head>
 <body class="@(isLoginPage ? "login-page" : "")">
-    <header>
+    <div class="wrapper d-flex flex-column min-vh-100">
+        <header>
         @if (isLoggedIn && !isLoginPage)
         {
             <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
@@ -41,8 +42,8 @@
                                 <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-page="/Privacy">Privacy</a>
-                            </li>
+                                    <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
+                                </li>
                         </ul>
 
                         <ul class="navbar-nav ms-auto align-items-center">
@@ -61,19 +62,30 @@
                 </div>
             </nav>
         }
-    </header>
+        </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted mt-3">
         <div class="container">
-            &copy; 2025 - GamePlatform RWA
+            <main role="main" class="flex">
+                <div class="container">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @RenderBody()
+                </div>
+            </main>
         </div>
-    </footer>
+
+        <footer class="footer mt-auto">
+            <div class="container">
+                &copy; 2025 - GamePlatform RWA
+            </div>
+        </footer>
+    </div> 
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)

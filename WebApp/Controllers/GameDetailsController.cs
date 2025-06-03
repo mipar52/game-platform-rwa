@@ -1,6 +1,7 @@
 ﻿// GameDetailsController.cs
 using Microsoft.AspNetCore.Mvc;
 using WebApp.Services;
+using WebApp.Utilities;
 using WebApp.ViewModels;
 
 namespace WebApp.Controllers
@@ -18,23 +19,36 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Index(int id)
         {
             var game = await _apiService.GetAsync<GameDetailsViewModel>($"Game/GetGameById?id={id}");
+            var userInfo = await _apiService.GetAsync<SimpleUserViewModel>("User/whoami");
+            DebugHelper.PrintDebugMessage($"WHOAMI: ID: {userInfo.Id}, Username: {userInfo.Username}, Role: {userInfo.Role}");
+            ViewBag.UserId = userInfo?.Id ?? 0;
             return View(game);
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddComment(int GameId, string ReviewText, int Rating)
+        public async Task<IActionResult> AddComment(CreateReviewViewModel viewModel)
         {
-            var review = new
+            // Optional: validate again
+            if (viewModel.Rating < 1 || viewModel.Rating > 10)
             {
-                GameId,
-                UserId = 1, // TODO: Replace with actual logged-in user ID from session
-                Rating,
-                ReviewText,
-                CreatedAt = DateTime.UtcNow
-            };
+                TempData["Error"] = "Invalid rating.";
+                return RedirectToAction("Index", new { id = viewModel.GameId });
+            }
 
-          //  await _apiService.PostAsync("Review/CreateReview", review);
-            return RedirectToAction("Index", new { id = GameId });
+            DebugHelper.PrintDebugMessage($"UserID posted a review: {viewModel.UserId}");
+            var response = await _apiService.PostAsync("GameReview/CreateReview", viewModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] = "Review submitted successfully!";
+            }
+            else
+            {
+                DebugHelper.PrintDebugMessage($"Create review error: {response.StatusCode}");
+                TempData["Error"] = "Failed to submit review.";
+            }
+
+            return RedirectToAction("Index", new { id = viewModel.GameId });
         }
     }
 }

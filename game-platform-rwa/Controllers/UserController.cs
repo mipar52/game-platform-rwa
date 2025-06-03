@@ -5,10 +5,13 @@ using game_platform_rwa.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace game_platform_rwa.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class UserController : Controller
     {
         private readonly IConfiguration config;
@@ -47,6 +50,123 @@ namespace game_platform_rwa.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("GetAllUsers")]
+        [Authorize(Roles = "Admin")]
+        public ActionResult<IEnumerable<AdminUserDto>> GetAllUsers()
+        {
+            try
+            {
+                var users = context.Users
+                    .Include(u => u.Role)
+                    .Select(u => new AdminUserDto
+                    {
+                        Id = u.Id,
+                        Username = u.Username,
+                        Email = u.Email,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Phone = u.Phone,
+                        RoleId = u.RoleId
+                    })
+                    .ToList();
+
+                logService.Log($"Successfully obtained all users! User count: {users.Count()}", "Success");
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error getting all users: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("[action]")]
+        [Authorize]
+        public ActionResult<AdminUserDto> GetUserById(int id)
+        {
+            try
+            {
+                var user = context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefault(u => u.Id == id);
+
+                if (user == null)
+                    return NotFound("User not found.");
+
+                var result = new AdminUserDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Phone = user.Phone,
+                    RoleId = user.RoleId
+                };
+
+                logService.Log($"Successfully obtained with ID {result.Id}, username: {result.Username}!", "Success");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error retrieving user by ID: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("Update/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] EditUserDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+                if (user == null)
+                {
+                    logService.Log($"User with ID {id} not found for update", "Error");
+                    return NotFound($"User with ID {id} not found");
+                }
+
+                // Update editable fields
+                user.Username = dto.Username;
+                user.Email = dto.Email;
+                user.FirstName = dto.FirstName;
+                user.LastName = dto.LastName;
+                user.Phone = dto.Phone;
+
+                if (dto.ConfirmPassword != dto.ConfirmPassword)
+                {
+                    logService.Log($"Updated user with ID={id} failed! Passwords do not match!", "Error");
+                    return StatusCode(400, "Passwords do not match!");
+                }
+
+                // Optional password update
+                if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+                {
+                    var newSalt = PasswordHashProvider.GetSalt();
+                    var newHash = PasswordHashProvider.GetHash(dto.NewPassword, newSalt);
+
+                    user.PwdSalt = newSalt;
+                    user.PwdHash = newHash;
+                }
+
+                await context.SaveChangesAsync();
+
+                logService.Log($"Updated user info for user ID={id}", "Success");
+                return Ok("User updated successfully");
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Failed to update user ID={id}. Error: {ex.Message}", "Error");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
 
         [HttpPost("[action]")]
         public ActionResult<UserDto> RegisterUser(UserDto userDto)
@@ -143,7 +263,8 @@ namespace game_platform_rwa.Controllers
                     secureKey, 
                     120, 
                     userDto.Username,
-                    role
+                    role,
+                    $"{existingUser.Id}"
                     );
 
                 logService.Log($"Login successufuly. User: {userDto.Username}.", "Success");
@@ -169,7 +290,7 @@ namespace game_platform_rwa.Controllers
             {
                 var identity = HttpContext.User.Identity as ClaimsIdentity;
                 var username = identity?.FindFirst(ClaimTypes.Name)?.Value;
-
+                
                 var user = context.Users.FirstOrDefault(u => u.Username == username);
                 if (user == null)
                 {
@@ -242,9 +363,18 @@ namespace game_platform_rwa.Controllers
         public IActionResult WhoAmI()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userId = identity?.FindFirst("UserId")?.Value;
+
+            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var id))
+            {
+                logService.Log($"Issues with getting the token information!", "Error");
+                return BadRequest("Could not get all of the information from the token!");
+            }
+
             var username = identity?.FindFirst(ClaimTypes.Name)?.Value;
             var role = identity?.FindFirst(ClaimTypes.Role)?.Value;
-            return Ok(new { username, role });
+            logService.Log($"Succesfully got the token from the user with username={username}", "Success");
+            return Ok(new { id, username, role });
         }
     }
 }

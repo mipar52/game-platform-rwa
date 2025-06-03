@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -7,7 +8,7 @@ namespace game_platform_rwa.Security
 {
     public class JwtTokenProvider
     {
-        public static string CreateToken(string secureKey, int expiration, string username = null, string role = null)
+        public static string CreateToken(string secureKey, int expiration, string username = null, string role = null, string id = null)
         {
             var tokenKey = Encoding.UTF8.GetBytes(secureKey);
 
@@ -22,6 +23,12 @@ namespace game_platform_rwa.Security
             if (!string.IsNullOrEmpty(role))
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            if (!string.IsNullOrEmpty(id))
+            {
+                Debug.WriteLine($"[WebAPI] - UserID: {id}");
+                claims.Add(new Claim("UserId", id));
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor
