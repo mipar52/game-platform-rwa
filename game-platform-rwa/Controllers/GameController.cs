@@ -185,9 +185,10 @@ namespace game_platform_rwa.Controllers
                     GameTypeId = game.GameTypeId,
                     MetacriticScore = (int)game.MetaCriticScore,
                     WonGameOfTheYear = game.GameOfTheYearAward,
+                    ImageUrl = game.ImageUrl,
+                    ImagePath = game.ImagePath
                 };
 
-                logService.Log($"Game '{newGame.Name}' with id={newGame.Id} created.");
 
                 foreach (var genre in game.GenreIds)
                 {
@@ -202,7 +203,6 @@ namespace game_platform_rwa.Controllers
                     logService.Log($"Added new Genre with id={genre} when creating the game.");
                 }
 
-                // adding the newly added game to its gameType
                 var gameTypes = context.GameTypes.FirstOrDefault(x => x.Id == newGame.GameTypeId);
                 if (gameTypes != null)
                 {
@@ -210,6 +210,7 @@ namespace game_platform_rwa.Controllers
                 }
 
                context.SaveChanges();
+                logService.Log($"Game '{newGame.Name}' with id={newGame.Id} created.");
 
                 return CreatedAtAction(nameof(GetGameById), new { name = newGame.Name }, new { newGame.Id });
             }
@@ -237,6 +238,8 @@ namespace game_platform_rwa.Controllers
                 existing.ReleaseDate = game.ReleaseDate;
                 existing.GameUrl = game.GameUrl;
                 existing.GameTypeId = game.GameTypeId;
+                existing.ImagePath  = game.ImagePath;
+                existing.ImageUrl = game.ImageUrl;
 
                 // Update genres
                 context.GameGenres.RemoveRange(existing.GameGenres);

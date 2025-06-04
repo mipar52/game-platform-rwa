@@ -21,6 +21,10 @@ public partial class Game
 
     public bool? WonGameOfTheYear { get; set; }
 
+    public string? ImageUrl { get; set; }
+
+    public string? ImagePath { get; set; }
+
     public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
 
     public virtual GameType GameType { get; set; } = null!;

@@ -24,6 +24,9 @@ namespace game_platform_rwa.DTOs
         public bool GameOfTheYearAward { get; set; } = false;
 
         public int MetaCriticScore { get; set; } = 0;
+        public string? ImagePath { get; set; }
+        public string? ImageUrl { get; set; }
+
     }
 
 }

@@ -18,6 +18,7 @@
 
     <!-- Game Info -->
     <div class="card bg-dark text-light border-danger mb-4">
+        <img src="@(!string.IsNullOrEmpty(@Model.ImageUrl) ? @Model.ImageUrl : "https://media.gq-magazine.co.uk/photos/645b5c3c8223a5c3801b8b26/16:9/w_1920,c_limit/100-best-games-hp-b.jpg")" alt="@Model.Name" class="card-img-top" style="max-height: 300px; object-fit: cover;" />
         <div class="card-body">
             <h5 class="card-title text-warning">Game Information</h5>
             <p><strong>Description:</strong> @Model?.Description</p>

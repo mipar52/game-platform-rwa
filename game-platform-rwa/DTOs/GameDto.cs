@@ -13,6 +13,8 @@ namespace game_platform_rwa.DTOs
         public GameTypeDto GameType { get; set; }
         public int? MetacriticScore { get; set; }
         public bool WonGameOfTheYear { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImagePath { get; set; }
         public IEnumerable<GenreDto> Genres { get; set; } = new List<GenreDto>();
         public IEnumerable<GameReviewDto> Reviews { get; set; } = new List<GameReviewDto>();
     }

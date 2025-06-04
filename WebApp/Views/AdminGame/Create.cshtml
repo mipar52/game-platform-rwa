@@ -1,0 +1,74 @@
+﻿@model WebApp.ViewModels.AdminGameViewModel
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Create Game" : "Update Game";
+}
+
+<h2 class="text-danger">@ViewData["Title"]</h2>
+
+<form method="post" asp-action="Save">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReleaseDate"></label>
+        <input asp-for="ReleaseDate" class="form-control" type="date" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="GameUrl"></label>
+        <input asp-for="GameUrl" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MetacriticScore"></label>
+        <input asp-for="MetacriticScore" class="form-control" type="number" />
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="WonGameOfTheYear" class="form-check-input" />
+        <label asp-for="WonGameOfTheYear" class="form-check-label"></label>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ImageUrl"></label>
+        <input asp-for="ImageUrl" class="form-control" />
+    </div>
+
+    <!-- GameType (Single selection) -->
+    <div class="mb-3">
+        <label><strong>Select Game Type</strong></label>
+        <div class="btn-group d-flex flex-wrap" role="group">
+            @foreach (var type in ViewBag.GameTypes as List<WebApp.ViewModels.GameTypeViewModel>)
+            {
+                <input type="radio" class="btn-check" name="SelectedGameTypeId" id="type-@type.Id" value="@type.Id"
+                       checked="@(Model.GameType?.Id == type.Id)">
+                <label class="btn btn-outline-primary m-1" for="type-@type.Id">@type.Name</label>
+            }
+        </div>
+    </div>
+
+    <!-- Genres (Multi-selection) -->
+    <div class="mb-3">
+        <label><strong>Select Genres</strong></label>
+        <div class="btn-group d-flex flex-wrap" role="group">
+            @foreach (var genre in ViewBag.Genres as List<WebApp.ViewModels.GameGenreViewModel>)
+            {
+                <input type="checkbox" class="btn-check" name="SelectedGenreIds" id="genre-@genre.Id" value="@genre.Id"
+                       checked="@(Model.Genres.Any(g => g.Id == genre.Id))">
+                <label class="btn btn-outline-success m-1" for="genre-@genre.Id">@genre.Name</label>
+            }
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-danger">Save</button>
+</form>

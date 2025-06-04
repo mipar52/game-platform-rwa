@@ -11,6 +11,7 @@
             <div class="col-md-4 mb-4">
                 <a asp-controller="GameDetails" asp-action="Index" asp-route-id="@game.Id" class="text-decoration-none">
                     <div class="card bg-dark text-light border-danger h-100">
+                        <img src="@(!string.IsNullOrEmpty(game.ImageUrl) ? game.ImageUrl : "https://media.gq-magazine.co.uk/photos/645b5c3c8223a5c3801b8b26/16:9/w_1920,c_limit/100-best-games-hp-b.jpg")" alt="@game.Name" class="card-img-top" style="height: 200px; object-fit: cover;" />
                         <div class="card-body">
                             <h5 class="card-title">@game.Name</h5>
                             <p class="card-text">@game.Description</p>

@@ -3,8 +3,10 @@
 @{
     var isLoggedIn = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") != null;
     var username = HttpContextAccessor.HttpContext?.Session.GetString("Username");
+    var role = HttpContextAccessor.HttpContext?.Session.GetString("Role");
     var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
     var isLoginPage = currentPath.Contains("/login");
+    
     @Html.AntiForgeryToken()
 }
 
@@ -21,6 +23,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
 
     <script src="~/js/logout.js" asp-append-version="true"></script>
+    <script src="~/js/loginLogic.js"></script>
+    <script>
+        const jwtToken = '@HttpContextAccessor.HttpContext?.Session.GetString("JwtToken")';
+        localStorage.setItem("jwtToken", jwtToken);
+    </script>
 
 </head>
 <body class="@(isLoginPage ? "login-page" : "")">
@@ -41,6 +48,10 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
+                                    <li class="nav-item" id="admin-panel-link" style="display: none;">
+                                        <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
+                                    </li>
+
                             <li class="nav-item">
                                     <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
                                 </li>

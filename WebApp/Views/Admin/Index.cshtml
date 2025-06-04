@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="container mt-5">
+    <h2 class="text-danger">Admin Panel</h2>
+    <p class="text-muted">Manage platform content and users.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <a asp-controller="AdminGame" asp-action="Index" class="btn btn-outline-danger w-100">Games</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-controller="GameTypesAdmin" asp-action="Index" class="btn btn-outline-danger w-100">Game Types</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-controller="GenresAdmin" asp-action="Index" class="btn btn-outline-danger w-100">Genres</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-controller="UsersAdmin" asp-action="Index" class="btn btn-outline-danger w-100">Users</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-controller="ReviewsAdmin" asp-action="Index" class="btn btn-outline-danger w-100">Reviews</a>
+        </div>
+    </div>
+</div>

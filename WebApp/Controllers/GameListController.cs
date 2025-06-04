@@ -28,6 +28,8 @@ namespace WebApp.Controllers
                 Id = g.Id,
                 Name = g.Name,
                 Description = g.Description,
+                ImagePath = g.ImagePath,
+                ImageUrl = g.ImageUrl,
                 GenreName = string.Join(", ", g.Genres.Select(x => x.Name)),
                 GameType = new GameTypeViewModel
                 {
@@ -49,6 +51,8 @@ namespace WebApp.Controllers
                 Id = g.Id,
                 Name = g.Name,
                 Description = g.Description,
+                ImageUrl = g.ImageUrl,
+                ImagePath = g.ImagePath,
                 GenreName = string.Join(", ", g.Genres.Select(x => x.Name)),
                 GameType = new GameTypeViewModel
                 {

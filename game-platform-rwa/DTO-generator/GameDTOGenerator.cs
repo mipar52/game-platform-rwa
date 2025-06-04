@@ -23,7 +23,8 @@ namespace game_platform_rwa.DTO_generator
                 },
                 MetacriticScore = game.MetacriticScore,
                 WonGameOfTheYear = game.WonGameOfTheYear ?? false,
-
+                ImagePath = game.ImagePath,
+                ImageUrl = game.ImageUrl,
                 Genres = game.GameGenres?
                     .Select(gg => generateGenreDto(gg.Genre))
                     .ToList() ?? new List<GenreDto>(),
