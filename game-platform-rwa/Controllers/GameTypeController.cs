@@ -151,23 +151,25 @@ public class GameTypeController : ControllerBase
         {
             return BadRequest(ModelState);
         }
+
         try
         {
-            var existing = context.GameTypes.Include(g => updated).FirstOrDefault(g => g.Id == id);
+            var existing = context.GameTypes.FirstOrDefault(g => g.Id == id);
             if (existing == null)
             {
-                logService.Log($"Could not update any GameType with id={updated.Id}", "No results");
+                logService.Log($"Could not update any GameType with id={id}", "No results");
                 return NotFound($"GameType ID {id} not found");
             }
 
             existing.Name = updated.Name;
 
             context.SaveChanges();
-            logService.Log($"Updated GameType with id={updated.Id}", "Success");
-            return NoContent();
-        } catch (Exception ex)
+            logService.Log($"Updated GameType with id={id}", "Success");
+            return Ok();
+        }
+        catch (Exception ex)
         {
-            logService.Log($"Could not update GameType with id={updated.Id}. Error: {ex.Message}", "Error");
+            logService.Log($"Could not update GameType with id={id}. Error: {ex.Message}", "Error");
             return StatusCode(500, ex.Message);
         }
     }

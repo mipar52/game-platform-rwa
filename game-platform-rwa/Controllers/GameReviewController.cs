@@ -24,6 +24,36 @@ namespace game_platform_rwa.Controllers
             this.logService = logService;
         }
 
+        [HttpGet("GetAllReviews")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetAllReviews()
+        {
+            try
+            {
+                var reviews = context.Reviews
+                    .Include(r => r.Game)
+                    .Include(r => r.User)
+                    .ToList();
+
+                if (!reviews.Any())
+                {
+                    logService.Log("No reviews found.", "No results");
+                    return NotFound("No reviews found.");
+                }
+
+                var result = reviews.Select(GameDTOGenerator.generateGameReviewDto).ToList();
+
+                logService.Log($"Retrieved all {result.Count} reviews.", "Success");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error retrieving all reviews: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
         [HttpGet("[action]")]
         public ActionResult<IEnumerable<Review>> GetAllReviewsForGame(int gameId)
         {
@@ -155,8 +185,16 @@ namespace game_platform_rwa.Controllers
                     return NotFound("Review not found.");
                 }
 
-                review.Approved = true;
-                context.SaveChanges();
+                if (review.Approved == null)
+                {
+                    review.Approved = true;
+                } else
+                {
+                    review.Approved = review.Approved == true ? false : true;
+                }
+
+
+                    context.SaveChanges();
 
                 logService.Log($"Review with gameid={gameId}, for user={userId} approved", "Success");
                 return Ok("Review approved.");

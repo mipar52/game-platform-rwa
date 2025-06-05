@@ -72,6 +72,8 @@ namespace game_platform_rwa.DTO_generator
                 ReviewText = review.ReviewText,
                 Approved = review.Approved,
                 CreatedAt = review.CreatedAt,
+                Game = review.Game,
+                User = review.User
             };
         }
 

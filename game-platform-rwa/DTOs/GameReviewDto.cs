@@ -16,5 +16,9 @@ namespace game_platform_rwa.DTOs
         public bool? Approved { get; set; }
 
         public DateTime? CreatedAt { get; set; }
+
+        public User? User { get; set; }
+        public Game? Game { get; set; }
+
     }
 }

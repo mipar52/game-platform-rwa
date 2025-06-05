@@ -1,0 +1,13 @@
+﻿@model WebApp.ViewModels.GameTypeViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Create Game Type" : "Edit Game Type";
+}
+<h2 class="text-danger">@ViewData["Title"]</h2>
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-danger">Save</button>
+</form>

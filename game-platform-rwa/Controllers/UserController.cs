@@ -335,20 +335,21 @@ namespace game_platform_rwa.Controllers
                 var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.Username == username);
                 if (user == null)
                 {
-                    logService.Log($"Could not find user with username={username} to promote to admin role", "Error");
+                    logService.Log($"Could not find user with username={username} to promote to change the role", "Error");
                     return NotFound("User not found");
                 }
 
                 var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
                 if (adminRole == null)
                 {
-                    logService.Log($"Could not find user with username={username} to promote to admin role", "Error");
+                    logService.Log($"Could not find user with username={username} to promote to change the role", "Error");
                     return StatusCode(500, "Admin role not found");
+                
                 }
-
-                user.RoleId = adminRole.Id;
+                user.RoleId = user.RoleId == adminRole.Id ? 2 : adminRole.Id;
+                
                 context.SaveChanges();
-                logService.Log($"Succesfully promoted user with username={username} to admin role", "Success");
+                logService.Log($"Succesfully promoted user with username={username} to role with id={user.RoleId}", "Success");
                 return Ok($"{username} has been promoted to Admin");
             } catch (Exception ex)
             {
@@ -356,6 +357,34 @@ namespace game_platform_rwa.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpDelete("Delete/{id}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult DeleteUser(int id)
+        {
+            try
+            {
+                var user = context.Users.FirstOrDefault(u => u.Id == id);
+
+                if (user == null)
+                {
+                    logService.Log($"User with ID={id} not found for deletion.", "Error");
+                    return NotFound($"User with ID={id} not found");
+                }
+
+                context.Users.Remove(user);
+                context.SaveChanges();
+
+                logService.Log($"Successfully deleted user with ID={id} and username='{user.Username}'", "Success");
+                return Ok($"User with ID={id} has been deleted");
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Failed to delete user with ID={id}. Error: {ex.Message}", "Error");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
 
         // helper method to check the role of the user
         [HttpGet("whoami")]
