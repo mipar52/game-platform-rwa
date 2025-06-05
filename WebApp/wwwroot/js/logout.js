@@ -11,6 +11,7 @@
         if (confirmed) {
             logoutForm.submit();
             localStorage.clear();
+            localStorage.setItem("logout", Date.now());
         }
     });
 });
