@@ -1,0 +1,71 @@
+﻿body {
+    background: #111;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.neon-header {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #f58220;
+    text-shadow: 0 0 5px #f58220, 0 0 10px #f58220;
+    margin-bottom: 2rem;
+}
+
+.category-form {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #1d1d1b;
+    border: 2px solid #a00062;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(160, 0, 98, 0.3);
+}
+
+.genre-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.genre-btn {
+    border: 2px solid #00aeef;
+    background-color: transparent;
+    color: #00aeef;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+    .genre-btn:hover,
+    .btn-check:checked + .genre-btn {
+        background-color: #00aeef;
+        color: #1d1d1b;
+        box-shadow: 0 0 10px #00aeef;
+    }
+
+.custom-select {
+    background-color: #1d1d1b;
+    color: white;
+    border: 2px solid #f58220;
+    font-weight: bold;
+}
+
+.browse-btn {
+    display: block;
+    margin: 2rem auto 0;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    background-color: #a00062;
+    color: white;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+    .browse-btn:hover {
+        background-color: #f58220;
+    }

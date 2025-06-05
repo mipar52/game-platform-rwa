@@ -4,18 +4,35 @@
     ViewData["Title"] = "Game Categories";
 }
 
-<form asp-controller="GameList" asp-action="Index" method="post">
-    <h2>Select Game Type</h2>
-    <select asp-for="SelectedGameTypeId" asp-items="@(new SelectList(Model.GameTypes, "Id", "Name"))" class="form-control"></select>
+<link rel="stylesheet" href="~/css/game-categories.css" />
 
-    <h3 class="mt-4">Select Genres</h3>
-    @foreach (var genre in Model.GameGenres)
-    {
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="SelectedGenreIds" value="@genre.Id" id="genre_@genre.Id" />
-            <label class="form-check-label" for="genre_@genre.Id">@genre.Name</label>
+<div class="game-category-wrapper">
+    <h1 class="neon-header">Choose Your Adventure</h1>
+
+    <form asp-controller="GameList" asp-action="Index" method="post" class="category-form">
+
+        <label asp-for="SelectedGameTypeId" class="form-label">Select Game Type</label>
+        <select asp-for="SelectedGameTypeId"
+                asp-items="@(new SelectList(Model.GameTypes, "Id", "Name"))"
+                class="form-select custom-select mb-4"></select>
+
+        <h3 class="text-white">Select Your Genres</h3>
+        <div class="genre-grid mt-3">
+            @foreach (var genre in Model.GameGenres)
+            {
+                <input type="checkbox"
+                       name="SelectedGenreIds"
+                       value="@genre.Id"
+                       id="genre_@genre.Id"
+                       class="btn-check"
+                       autocomplete="off" />
+
+                <label class="btn genre-btn" for="genre_@genre.Id">
+                    @genre.Name
+                </label>
+            }
         </div>
-    }
 
-    <button type="submit" class="btn btn-danger mt-4">Browse Games</button>
-</form>
+        <button type="submit" class="btn browse-btn mt-4">Browse Games</button>
+    </form>
+</div>

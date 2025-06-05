@@ -37,16 +37,29 @@ namespace WebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Browse(GameSearchRequestViewModel request)
         {
-            if (request.SelectedGenreIds == null || !request.SelectedGenreIds.Any())
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Please select at least one genre.";
-                return RedirectToAction("Index", "GameType");
+                TempData["Error"] = "Invalid form submission.";
+                return RedirectToAction("Index");
+            }
+            string url;
+            DebugHelper.PrintDebugMessage($"Selected genres: {request.SelectedGenreIds}");
+            if (request.SelectedGenreIds == null || request.SelectedGenreIds.Count == 0)
+            {
+                url = $"GameType/GetGamesWithGameType?id={request.GameTypeId}";
+            } else
+            {
+                var genreQuery = string.Join("&genreIds=", request.SelectedGenreIds);
+                url = $"Game/GetGamesByTypeAndGenres?gameTypeId={request.GameTypeId}&genreIds={genreQuery}";
             }
 
-            var genreQuery = string.Join("&genreIds=", request.SelectedGenreIds);
-            string url = $"Game/GetGamesByTypeAndGenres?gameTypeId={request.GameTypeId}&genreIds={genreQuery}";
-
             var games = await _apiService.GetAsync<List<GameViewModel>>(url);
+
+            if (games == null || games.Count == 0)
+            {
+                TempData["Error"] = "Looks like you are too picky! No games found, choose another filter!";
+                return RedirectToAction("Index", "GameType");
+            }
 
             return View("GameList", games);
         }

@@ -2,11 +2,12 @@
 
 @{
     var isLoggedIn = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") != null;
+    var jwtToken = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken");
     var username = HttpContextAccessor.HttpContext?.Session.GetString("Username");
     var role = HttpContextAccessor.HttpContext?.Session.GetString("Role");
     var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
     var isLoginPage = currentPath.Contains("/login");
-    
+
     @Html.AntiForgeryToken()
 }
 
@@ -21,58 +22,65 @@
     <link rel="stylesheet" href="~/WebApp.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
+    <script>
+        console.log('current root: ' + window.location.origin);
+    </script>
+    @if (!string.IsNullOrEmpty(jwtToken))
+    {
+        <script>
+            console.log(window.location.origin);
+            localStorage.setItem("jwtToken", "@jwtToken");
+            sessionStorage.setItem("JwtToken", "@jwtToken");
+        </script>
+    }
 
     <script src="~/js/logout.js" asp-append-version="true"></script>
-    <script src="~/js/loginLogic.js"></script>
-    <script>
-        const jwtToken = '@HttpContextAccessor.HttpContext?.Session.GetString("JwtToken")';
-        localStorage.setItem("jwtToken", jwtToken);
-    </script>
+
 
 </head>
+
 <body class="@(isLoginPage ? "login-page" : "")">
     <div class="wrapper d-flex flex-column min-vh-100">
         <header>
-        @if (isLoggedIn && !isLoginPage)
-        {
-            <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
-                <div class="container">
-                    <a class="navbar-brand" asp-controller="Home" asp-action="Index">Game Platform RWA</a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+            @if (isLoggedIn && !isLoginPage)
+            {
+                <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+                    <div class="container">
+                        <a class="navbar-brand" asp-controller="Home" asp-action="Index">Game Platform RWA</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
 
-                    <div class="collapse navbar-collapse" id="navbarContent">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                                    <li class="nav-item" id="admin-panel-link" style="display: none;">
-                                        <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
-                                    </li>
-
-                            <li class="nav-item">
+                        <div class="collapse navbar-collapse" id="navbarContent">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
                                 </li>
-                        </ul>
+                                <li class="nav-item" id="admin-panel-link" style="display: none;">
+                                    <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
+                                </li>
+                            </ul>
 
-                        <ul class="navbar-nav ms-auto align-items-center">
-                            <li class="nav-item">
-                                <span class="user-greeting me-2 text-light" style="font-family: 'Orbitron'; font-weight: 500;">
-                                    Hello, @username!
-                                </span>
-                            </li>
-                            <li class="nav-item">
-                                <form method="post" asp-controller="Login" asp-action="Logout" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
+                            <ul class="navbar-nav ms-auto align-items-center">
+                                <li class="nav-item">
+                                    <span class="user-greeting me-2 text-light" style="font-family: 'Orbitron'; font-weight: 500;">
+                                        Hello, @username!
+                                    </span>
+                                </li>
+                                <li class="nav-item">
+                                    <form id="logoutForm" method="post" asp-controller="Login" asp-action="Logout" class="d-inline">
+                                        <button type="submit" id="logoutButton" class="btn btn-outline-light btn-sm">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            </nav>
-        }
+                </nav>
+            }
         </header>
 
         <div class="container">
@@ -90,7 +98,6 @@
                 </div>
             </main>
         </div>
-
         <footer class="footer mt-auto">
             <div class="container">
                 &copy; 2025 - GamePlatform RWA
@@ -98,7 +105,12 @@
         </footer>
     </div> 
 
+
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

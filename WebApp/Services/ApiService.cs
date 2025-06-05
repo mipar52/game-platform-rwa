@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using System;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
@@ -67,17 +68,23 @@ namespace WebApp.Services
             }
 
             DebugHelper.PrintDebugMessage("[WebApp] - Getting the data from: " + _baseUrl + uri);
-
-            var response = await client.GetAsync(_baseUrl + uri);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var json = await response.Content.ReadAsStringAsync();
-                DebugHelper.PrintDebugMessage("JSON: " + json);
-                return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var response = await client.GetAsync(_baseUrl + uri);
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    DebugHelper.PrintDebugMessage("JSON: " + json);
+                    return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+
+                DebugHelper.PrintDebugMessage($"Request to {uri} failed with status: {response.StatusCode}");
+                return default;
+            } catch (Exception ex)
+            {
+                return default;
             }
 
-            DebugHelper.PrintDebugMessage($"Request to {uri} failed with status: {response.StatusCode}");
-            return default;
         }
 
         public async Task<HttpResponseMessage> PostAsync<T>(string uri, T data)

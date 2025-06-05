@@ -4,15 +4,18 @@ using System.Text.Json;
 using System.Text;
 using WebApp.ViewModels;
 using WebApp.Utilities;
+using WebApp.Services;
 
 namespace WebApp.Controllers
 {
     public class LoginController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly ApiService _apiService;
 
-        public LoginController(IHttpClientFactory clientFactory)
+        public LoginController(ApiService apiService, IHttpClientFactory clientFactory)
         {
+            _apiService = apiService;
             _clientFactory = clientFactory;
         }
 
@@ -47,6 +50,43 @@ namespace WebApp.Controllers
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View(loginModel);
         }
+
+        // GET: Login/RegisterUser
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(UserViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            HttpResponseMessage response = await _apiService.PostAsync("User/RegisterUser", model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Registration successful! You can now log in.";
+                return RedirectToAction("Index");
+            }
+
+            TempData["Error"] = "Failed to save user.";
+            return View(model);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index");
+        }
+
     }
 }
 

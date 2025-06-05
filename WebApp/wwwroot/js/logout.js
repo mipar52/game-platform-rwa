@@ -1,20 +1,16 @@
-﻿function confirmLogout() {
-    if (confirm("Are you sure you want to log out?")) {
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/Login/Logout";
+﻿document.addEventListener("DOMContentLoaded", function () {
+    const logoutForm = document.getElementById("logoutForm");
+    const logoutButton = document.getElementById("logoutButton");
 
-        // Add anti-forgery token if it exists
-        const token = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (token) {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "__RequestVerificationToken";
-            input.value = token.value;
-            form.appendChild(input);
+    if (!logoutForm || !logoutButton) return;
+
+    logoutButton.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const confirmed = confirm("Are you sure you want to log out?");
+        if (confirmed) {
+            logoutForm.submit();
+            localStorage.clear();
         }
-
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
+    });
+});

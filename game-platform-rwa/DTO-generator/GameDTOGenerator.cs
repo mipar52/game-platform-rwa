@@ -66,6 +66,7 @@ namespace game_platform_rwa.DTO_generator
         {
             return new GameReviewDto
             {
+                Id = review.Id,
                 UserId = review.UserId,
                 GameId = review.GameId,
                 Rating = review.Rating,

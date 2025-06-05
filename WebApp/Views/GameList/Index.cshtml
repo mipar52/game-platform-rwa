@@ -6,9 +6,9 @@
 
 <h2>Games</h2>
 
-@if (!Model.Any())
+@if (Model == null || !Model.Any())
 {
-    <p>No games found for the selected filters.</p>
+    <p>Looks like you are too picky! We currently do not have any games with the selected filter, choose another filter!</p>
 }
 else
 {

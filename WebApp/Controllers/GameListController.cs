@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using WebApp.Models;
 using WebApp.Services;
@@ -18,11 +20,23 @@ namespace WebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(int selectedGameTypeId, List<int> selectedGenreIds)
         {
-            var queryString = string.Join("&", selectedGenreIds.Select(id => $"genreIds={id}"));
-            var endpoint = $"Game/GetGamesByTypeAndGenres?gameTypeId={selectedGameTypeId}&{queryString}";
+            string endpoint;
+            if (selectedGenreIds == null || selectedGenreIds.Count == 0)
+            {
+                endpoint = $"GameType/GetGamesWithGameType?id={selectedGameTypeId}";
+            }
+            else
+            {
+                var queryString = string.Join("&", selectedGenreIds.Select(id => $"genreIds={id}"));
+                endpoint = $"Game/GetGamesByTypeAndGenres?gameTypeId={selectedGameTypeId}&{queryString}";
+            }
+
 
             var games = await _apiService.GetAsync<List<GameViewModel>>(endpoint);
-
+            if (games == null || games.Count == 0)
+            {
+                return View();
+            }
             var viewModel = games.Select(g => new GameListViewModel
             {
                 Id = g.Id,

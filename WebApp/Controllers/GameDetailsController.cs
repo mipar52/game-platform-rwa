@@ -40,7 +40,7 @@ namespace WebApp.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["Success"] = "Review submitted successfully!";
+                TempData["Success"] = "Review submitted successfully! The platform administrator needs to approve it first, and then it will be visible here. :)";
             }
             else
             {

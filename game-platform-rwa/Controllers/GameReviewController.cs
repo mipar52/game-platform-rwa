@@ -170,7 +170,7 @@ namespace game_platform_rwa.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost("[action]")]
-        public IActionResult ApproveReview(int gameId, int userId)
+        public IActionResult ApproveReview(int gameId, int userId, int id)
         {
             if (!ModelState.IsValid)
             {
@@ -178,7 +178,7 @@ namespace game_platform_rwa.Controllers
             }
             try
             {
-                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId);
+                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId && r.Id == id);
                 if (review == null)
                 {
                     logService.Log($"Review with gameid={gameId} not found", "No results");
@@ -206,13 +206,13 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpPut("[action]")]
-        public IActionResult UpdateReview(int gameId, int userId, [FromBody] GameReviewCreateDto updated)
+        public IActionResult UpdateReview(int gameId, int userId, int id, [FromBody] GameReviewCreateDto updated)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             try
             {
-                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId);
+                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId && r.Id == id);
                 if (review == null)
                 {
                     logService.Log($"Could not update the review with gameId={gameId}. It could be found.", "No results");
@@ -235,13 +235,13 @@ namespace game_platform_rwa.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("[action]")]
-        public IActionResult DeleteReview(int gameId, int userId)
+        public IActionResult DeleteReview(int gameId, int userId, int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             try
             {
-                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId);
+                var review = context.Reviews.FirstOrDefault(r => r.GameId == gameId && r.UserId == userId && r.Id == id);
                 if (review == null)
                 {
                     logService.Log($"Could not update the review with gameId={gameId}. It could be found.", "No results");

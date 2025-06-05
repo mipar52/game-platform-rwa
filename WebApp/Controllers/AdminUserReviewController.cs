@@ -22,17 +22,17 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int gameId, int userId)
+        public async Task<IActionResult> Delete(int gameId, int userId, int id)
         {
-            await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={gameId}&userId={userId}");
+            await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={gameId}&userId={userId}&Id={id}");
             
             return RedirectToAction("Index");
         }
 
         [HttpPost]
-        public async Task<IActionResult> ToggleApproval(int gameId, int userId, AdminGameReviewViewModel model)
+        public async Task<IActionResult> ToggleApproval(int gameId, int userId, int id, AdminGameReviewViewModel model)
         {
-            var response = await _apiService.PostAsync($"GameReview/ApproveReview?gameId={gameId}&userId={userId}", model);
+            var response = await _apiService.PostAsync($"GameReview/ApproveReview?gameId={gameId}&userId={userId}&id={id}", model);
 
             if (response.IsSuccessStatusCode)
             {
