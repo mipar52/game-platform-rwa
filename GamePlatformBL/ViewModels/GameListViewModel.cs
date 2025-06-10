@@ -9,7 +9,6 @@
         public string ImagePath { get; set; }
         public string ImageUrl { get; set; }
         public GameTypeViewModel GameType { get; set; }
-        // Add more fields as needed
     }
 
 }

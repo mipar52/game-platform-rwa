@@ -6,6 +6,8 @@ using GamePlatformBL.ViewModels;
 using WebApp.Services;
 using AutoMapper;
 using GamePlatformBL.Models;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Azure;
 
 namespace WebApp.Controllers
 {
@@ -36,40 +38,50 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Browse(GameSearchRequestViewModel request)
+        public async Task<IActionResult> Browse(GameSearchRequestViewModel request, int page = 1)
         {
+            const int pageSize = 6;
+
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Invalid form submission.";
                 return RedirectToAction("Index");
             }
+
             string url;
-            DebugHelper.AppPrintDebugMessage($"Selected genres: {request.SelectedGenreIds}, Selected gametypes: {request.GameTypeId}");
             if (request.SelectedGenreIds == null || request.SelectedGenreIds.Count == 0)
             {
-                url = $"GameType/GetGamesWithGameType?id={request.GameTypeId}";
-            } else
+                url = $"GameType/GetGamesWithGameTypePaged?id={request.GameTypeId}&page={page}&pageSize={pageSize}";
+            }
+            else
             {
                 var genreQuery = string.Join("&genreIds=", request.SelectedGenreIds);
-                url = $"Game/GetGamesByTypeAndGenres?gameTypeId={request.GameTypeId}&genreIds={genreQuery}";
+                url = $"Game/GetGamesByTypeAndGenresPaged?gameTypeId={request.GameTypeId}&genreIds={genreQuery}&page={page}&pageSize={pageSize}";
             }
 
+            var pagedResult = await _apiService.GetAsync<PagedResult<SimpleGameDto>>(url);
 
-            var games = await _apiService.GetAsync<List<SimpleGameDto>>(url);
-            DebugHelper.AppPrintDebugMessage($"Got games: {games.FirstOrDefault().GameGenres.FirstOrDefault().Genre.Name}");
-            var result = _mapper.Map<List<GameViewModel>>(games);
-            DebugHelper.AppPrintDebugMessage($"Got GAMEVM: {result.FirstOrDefault().GameGenres.FirstOrDefault().Genre.Name}");
-
-            var viewModel = _mapper.Map<IEnumerable<GameListViewModel>>(result).ToList();
-            DebugHelper.AppPrintDebugMessage($"Got GAME L VM: {viewModel.FirstOrDefault().GenreName}");
-
-            if (games == null || games.Count == 0)
+            if (pagedResult == null || pagedResult.Items.Count == 0)
             {
                 TempData["Error"] = "Looks like you are too picky! No games found, choose another filter!";
                 return RedirectToAction("Index", "GameType");
             }
 
-            return View("GameList", games);
+            var gameVM = _mapper.Map<PagedResult<GameViewModel>>(pagedResult);
+            var gameListVM = _mapper.Map<PagedResult<GameListViewModel>>(gameVM);
+
+            var viewModel = new PagedGameViewModel
+            {
+                Games = gameListVM.Items,
+                CurrentPage = gameListVM.CurrentPage,
+                PageSize = gameListVM.PageSize,
+                TotalCount = gameListVM.TotalCount,
+                SelectedGameTypeId = request.GameTypeId,
+                SelectedGenreIds = request.SelectedGenreIds
+            };
+
+            return View("GameList", viewModel);
         }
+
     }
-    }
+}

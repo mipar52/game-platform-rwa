@@ -1,4 +1,4 @@
-﻿@model List<GamePlatformBL.ViewModels.GameListViewModel>
+﻿@model GamePlatformBL.ViewModels.PagedGameViewModel;
 
 @{
     ViewData["Title"] = "Game List";
@@ -6,14 +6,14 @@
 
 <h2>Games</h2>
 
-@if (Model == null || !Model.Any())
+@if (Model.Games == null || !Model.Games.Any())
 {
     <p>Looks like you are too picky! We currently do not have any games with the selected filter, choose another filter!</p>
 }
 else
 {
     <div class="row">
-        @foreach (var game in Model)
+        @foreach (var game in Model.Games)
         {
             <div class="col-md-4 mb-4">
                 <a asp-controller="GameDetails" asp-action="Index" asp-route-id="@game.Id" class="text-decoration-none">
@@ -22,11 +22,42 @@ else
                         <div class="card-body">
                             <h5 class="card-title">@game.Name</h5>
                             <h6 class="card-subtitle mb-2 text-muted">@game.GenreName - @game.GameType.Name</h6>
-                            <p class="card-text">@game.Description</p>
+                            <p class="card-text">
+                                @((game.Description?.Length > 120)
+                                    ? game.Description.Substring(0, 120) + "..."
+                                    : game.Description)
+                            </p>
                         </div>
                     </div>
                 </a>
             </div>
         }
     </div>
+
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <form method="post">
+                    <input type="hidden" name="selectedGameTypeId" value="@Model.SelectedGameTypeId" />
+                    @foreach (var id in Model.SelectedGenreIds)
+                    {
+                        <input type="hidden" name="selectedGenreIds" value="@id" />
+                    }
+                    <input type="hidden" name="page" value="@(Model.CurrentPage - 1)" />
+                    <button class="page-link" type="submit">Previous</button>
+                </form>
+            </li>
+            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                <form method="post">
+                    <input type="hidden" name="selectedGameTypeId" value="@Model.SelectedGameTypeId" />
+                    @foreach (var id in Model.SelectedGenreIds)
+                    {
+                        <input type="hidden" name="selectedGenreIds" value="@id" />
+                    }
+                    <input type="hidden" name="page" value="@(Model.CurrentPage + 1)" />
+                    <button class="page-link" type="submit">Next</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
 }

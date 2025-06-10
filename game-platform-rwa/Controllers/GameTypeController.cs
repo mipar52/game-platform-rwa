@@ -116,6 +116,52 @@ public class GameTypeController : ControllerBase
         }
     }
 
+    [HttpGet("GetGamesWithGameTypePaged")]
+    public async Task<ActionResult<PagedResult<SimpleGameDto>>> GetGamesWithGameTypePaged(
+    int id, int page = 1, int pageSize = 6)
+    {
+        if (page <= 0 || pageSize <= 0)
+            return BadRequest("Page and pageSize must be greater than 0.");
+
+        try
+        {
+            var gameType = await context.GameTypes.FirstOrDefaultAsync(gt => gt.Id == id);
+            if (gameType == null)
+            {
+                logService.Log($"GameType not found with id={id}", "No Results");
+                return NotFound($"GameType id={id} not found.");
+            }
+
+            var query = context.Games
+                .Where(g => g.GameTypeId == id)
+                .Include(g => g.GameType)
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
+
+            var totalCount = await query.CountAsync();
+            var pagedGames = await query
+                .OrderBy(g => g.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mapped = _mapper.Map<List<SimpleGameDto>>(pagedGames);
+
+            return Ok(new PagedResult<SimpleGameDto>
+            {
+                Items = mapped,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            logService.Log($"Error getting paged games by GameType id={id}. {ex.Message}", "Error");
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+
     [Authorize(Roles = "Admin")]
     [HttpPost("[action]")]
     public IActionResult CreateGameType([FromBody] GameTypeCreateDto gameType)

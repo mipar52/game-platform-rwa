@@ -50,12 +50,16 @@ namespace GamePlatformBL.AutoMappers
             CreateMap<GameDto, GameDetailsViewModel>();
             CreateMap<GameReviewDto, GameReviewViewModel>();
             CreateMap<GameGenreDto, GameGenreViewModel>();
+            CreateMap<GameGenreDto, GameGenreViewModel>();
 
             // ViewModels to DTOs (MVC)
             CreateMap<UserViewModel, UserDto>();
             CreateMap<GameTypeViewModel, GameTypeDto>();
             CreateMap<GameGenreViewModel, GameGenreDto>();
-            CreateMap<GenreViewModel, GenreDto>();
+            CreateMap<PagedResult<SimpleGameDto>, PagedResult<GameViewModel>>();
+            CreateMap<PagedResult<GameViewModel>, PagedResult<GameListViewModel>>()
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+
 
             // VMs to VMs
             CreateMap<GameViewModel, GameListViewModel>()

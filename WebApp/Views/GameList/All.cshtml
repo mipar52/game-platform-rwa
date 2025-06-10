@@ -1,5 +1,37 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model GamePlatformBL.ViewModels.PagedGameViewModel;
+
+<div class="container mt-5">
+    <h2 class="text-danger">All Games</h2>
+    <div class="row mt-4">
+        @foreach (var game in Model.Games)
+        {
+            <div class="col-md-4 mb-4">
+                <a asp-controller="GameDetails" asp-action="Index" asp-route-id="@game.Id" class="text-decoration-none">
+                    <div class="card bg-dark text-light border-danger h-100">
+                        <img src="@(!string.IsNullOrEmpty(game.ImageUrl) ? game.ImageUrl : "https://media.gq-magazine.co.uk/photos/645b5c3c8223a5c3801b8b26/16:9/w_1920,c_limit/100-best-games-hp-b.jpg")" alt="@game.Name" class="card-img-top" style="height: 200px; object-fit: cover;" />
+                        <div class="card-body">
+                            <h5 class="card-title">@game.Name</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">@game.GenreName - @game.GameType.Name</h6>
+                            <p class="card-text">
+                                @((game.Description?.Length > 120)
+                                    ? game.Description.Substring(0, 120) + "..."
+                                    : game.Description)
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <nav>
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-controller="GameList" asp-action="All" asp-route-page="@(Model.CurrentPage - 1)">Previous</a>
+            </li>
+            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-controller="GameList" asp-action="All" asp-route-page="@(Model.CurrentPage + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

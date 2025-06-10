@@ -59,6 +59,45 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("GetPagedGames")]
+        public async Task<ActionResult<IEnumerable<SimpleGameDto>>> GetPagedGames(int page = 1, int pageSize = 6)
+        {
+            if (page <= 0 || pageSize <= 0)
+                return BadRequest("Page and pageSize must be greater than 0.");
+
+            try
+            {
+
+                var query = context.Games
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .OrderBy(g => g.Name);
+
+                var totalCount = await query.CountAsync();
+
+                var games = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var mapped = _mapper.Map<List<SimpleGameDto>>(games);
+
+                return Ok(new PagedResult<SimpleGameDto>
+                {
+                    Items = mapped,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Failed to get paged games. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
         [HttpGet("[action]")]
         public ActionResult<GameDto> GetGameById(int id)
         {
@@ -166,6 +205,50 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("[action]")]
+        public async Task<ActionResult<PagedResult<SimpleGameDto>>> GetGamesByTypeAndGenresPaged(
+    int gameTypeId, [FromQuery] List<int> genreIds, int page = 1, int pageSize = 6)
+        {
+            if (!genreIds.Any() || page <= 0 || pageSize <= 0)
+                return BadRequest("Genres, page, and pageSize must be valid.");
+
+            try
+            {
+                var matchingGameIds = await context.GameGenres
+                    .Where(gg => genreIds.Contains(gg.GenreId))
+                    .Select(gg => gg.GameId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var query = context.Games
+                    .Where(g => g.GameTypeId == gameTypeId && matchingGameIds.Contains(g.Id))
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
+
+                var totalCount = await query.CountAsync();
+
+                var pagedGames = await query
+                    .OrderBy(g => g.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var mapped = _mapper.Map<List<SimpleGameDto>>(pagedGames);
+
+                return Ok(new PagedResult<SimpleGameDto>
+                {
+                    Items = mapped,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error getting paged games by type and genres: {ex.Message}", "Error");
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
 
         [Authorize(Roles = "Admin")]
         [HttpPost("[action]")]
