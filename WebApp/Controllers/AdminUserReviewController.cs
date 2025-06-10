@@ -3,9 +3,12 @@ using GamePlatformBL.Utilities;
 using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
+
     public class AdminUserReviewController : Controller
     {
         private readonly ApiService _apiService;

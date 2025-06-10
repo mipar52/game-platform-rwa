@@ -4,9 +4,11 @@ using GamePlatformBL.DTOs;
 using WebApp.Services;
 using GamePlatformBL.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class GameGenreController : Controller
     {
         private readonly ApiService _apiService;

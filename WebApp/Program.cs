@@ -1,64 +1,78 @@
 ﻿using GamePlatformBL.AutoMappers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Text.Json.Serialization;
 using WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorPages();
-
+// ----------------------------
+// HTTP Client + Services
+// ----------------------------
 builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]);
 });
+
 builder.Services.AddScoped<ApiService>();
-var secureKey = builder.Configuration["JWT:SecureKey"];
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o => {
-var Key = Encoding.UTF8.GetBytes(secureKey);
-
-        o.TokenValidationParameters = new TokenValidationParameters
-    {
-    ValidateIssuer = false,
-    ValidateAudience = false,
-    IssuerSigningKey = new SymmetricSecurityKey(Key)
-    };
-});
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-builder.Services.AddDistributedMemoryCache(); // ✅ Required
+// ----------------------------
+// Razor Pages & Controllers
+// ----------------------------
+builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews();
+
+// ----------------------------
+// Session & Cache
+// ----------------------------
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-builder.Services.AddHttpContextAccessor();
+
+// ----------------------------
+// Authentication (Cookie-based)
+// ----------------------------
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login/Index";
+        options.LogoutPath = "/Login/LoggedOut";
+        options.AccessDeniedPath = "/Login/Forbidden";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(0.5);
+    });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ----------------------------
+// Middleware Pipeline
+// ----------------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
 }
-app.UseStaticFiles();
 
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseSession();
-app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Login}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+
 app.MapRazorPages();
 
 app.Run();

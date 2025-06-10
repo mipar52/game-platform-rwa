@@ -5,9 +5,11 @@ using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using GamePlatformBL.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     public class AdminGameTypeController : Controller
     {
         private readonly ApiService _apiService;

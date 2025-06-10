@@ -8,6 +8,7 @@
         <div class="login-box">
             <div class="neon-text">Welcome Summoner</div>
             <form asp-action="Index" method="post">
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
                 <div class="form-group">
                     <label asp-for="Username"></label>
                     <input asp-for="Username" class="form-control" />

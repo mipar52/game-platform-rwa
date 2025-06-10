@@ -16,6 +16,7 @@ namespace WebApp.Controllers
 
         public IActionResult Index()
         {
+            //ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 

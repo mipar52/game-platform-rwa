@@ -5,9 +5,11 @@ using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using GamePlatformBL.DTOs;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class GameDetailsController : Controller
     {
         private readonly ApiService _apiService;

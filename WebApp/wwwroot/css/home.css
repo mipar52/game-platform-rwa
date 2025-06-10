@@ -1,7 +1,4 @@
 ﻿/* Home background with Aatrox theme */
-#platform-logs-link {
-    display: none !important;
-}
 .home-wrapper {
     min-height: calc(100vh - 100px); /* adjust based on header/footer height */
     padding: 60px 20px;

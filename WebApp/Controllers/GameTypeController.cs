@@ -8,9 +8,11 @@ using AutoMapper;
 using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Azure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class GameTypeController : Controller
     {
         private readonly ApiService _apiService;

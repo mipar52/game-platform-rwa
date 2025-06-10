@@ -15,3 +15,12 @@ dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connecti
 
     - AJAX requestovi
     - AutoMapper
+
+        <script>
+        window.addEventListener('storage', function (event) {
+            if (event.key === "logout") {
+                console.log("Detected logout in another tab. Redirecting to login...");
+                window.location.href = "/Login";
+            }
+        });
+    </script>

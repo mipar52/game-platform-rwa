@@ -41,8 +41,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                // The same secure key must be used here to create JWT,
-                // as the one that is used by middleware to verify JWT
+
                 if (string.IsNullOrEmpty(secureKey))
                     return BadRequest("Something went wrong....");
 
@@ -239,7 +238,12 @@ namespace game_platform_rwa.Controllers
                     );
 
                 logService.Log($"Login successufuly. User: {userDto.Username}.", "Success");
-                return Ok(serializedToken);
+                return Ok(new
+                {
+                    token = serializedToken,
+                    role = role
+                });
+
             }
             catch (Exception ex)
             {

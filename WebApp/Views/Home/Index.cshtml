@@ -1,11 +1,17 @@
-﻿@{
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
     ViewData["Title"] = "Welcome to the Arena";
+    var user = HttpContextAccessor.HttpContext?.User;
+    var role = user?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 }
 <link rel="stylesheet" href="~/css/home.css" />
-<script src="~/js/homeLogic.js"></script>
 
 <div class="home-wrapper">
-    <a id="platform-logs-link" class="nav-link text-danger fw-bold" target="_blank" href="http://localhost:5196/logs/login.html">Platform Logs</a>
+    @if(role == "Admin") {
+        <a class="nav-link text-danger fw-bold" target="_blank" href="http://localhost:5196/logs/login.html">Platform Logs</a>
+    }
+   
     <div class="overlay-text">
         <h1 class="main-title">Welcome, Epic Gamer!</h1>
         <p class="subtitle">Game Platform RWA — the best game search & review site.</p>

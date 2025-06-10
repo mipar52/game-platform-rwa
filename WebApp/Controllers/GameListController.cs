@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using GamePlatformBL.Utilities;
 using System;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class GameListController : Controller
     {
         private readonly ApiService _apiService;

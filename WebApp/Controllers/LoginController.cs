@@ -3,9 +3,12 @@ using System.Text.Json;
 using System.Text;
 using GamePlatformBL.ViewModels;
 using WebApp.Services;
-using GamePlatformBL.Utilities;
 using AutoMapper;
 using GamePlatformBL.DTOs;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using GamePlatformBL.Utilities;
 
 namespace WebApp.Controllers
 {
@@ -14,6 +17,7 @@ namespace WebApp.Controllers
         private readonly IHttpClientFactory _clientFactory;
         private readonly ApiService _apiService;
         private readonly IMapper _mapper;
+
         public LoginController(ApiService apiService, IHttpClientFactory clientFactory, IMapper mapper)
         {
             _apiService = apiService;
@@ -22,37 +26,64 @@ namespace WebApp.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult Index(string? returnUrl = null)
         {
-            return View();
+            ViewData["ReturnUrl"] = returnUrl;
+            return View(new LoginUserViewModel());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Index(LoginUserViewModel loginModel)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Index(LoginUserViewModel loginModel, string? returnUrl = null)
         {
             if (!ModelState.IsValid)
                 return View(loginModel);
 
             var client = _clientFactory.CreateClient();
-            var json = JsonSerializer.Serialize(loginModel, new JsonSerializerOptions { PropertyNamingPolicy = null });
+            var json = JsonSerializer.Serialize(loginModel, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower });
+            DebugHelper.AppPrintDebugMessage($"Login JSON: {json}");
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync("http://localhost:5062/api/User/Login", content);
-            DebugHelper.AppPrintDebugMessage($"Login Status: {response.IsSuccessStatusCode}");
 
             if (response.IsSuccessStatusCode)
             {
-                var token = await response.Content.ReadAsStringAsync();
-                HttpContext.Session.SetString("JwtToken", token);
-                HttpContext.Session.SetString("Username", loginModel.Username);
-                return RedirectToAction("Index", "Home");
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                var loginResponse = JsonSerializer.Deserialize<LoginResponseViewModel>(responseBody, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (loginResponse != null)
+                {
+                    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, loginModel.Username),
+        new Claim(ClaimTypes.Role, loginResponse.Role),
+        new Claim("JwtToken", loginResponse.Token)
+    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var authProperties = new AuthenticationProperties { IsPersistent = true };
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties
+                    );
+
+                    return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                        ? LocalRedirect(returnUrl)
+                        : RedirectToAction("Index", "Home");
+                }
 
             }
+            DebugHelper.AppPrintDebugMessage($"Login error: {response.StatusCode} - {response.RequestMessage}");
             TempData["Error"] = "Invalid username or password.";
             return View(loginModel);
         }
 
-        // GET: Login/RegisterUser
         [HttpGet]
         public IActionResult Register()
         {
@@ -64,9 +95,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Register(UserViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
 
             var dto = _mapper.Map<UserDto>(model);
             HttpResponseMessage response = await _apiService.PostAsync("User/RegisterUser", dto);
@@ -81,15 +110,25 @@ namespace WebApp.Controllers
             return View(model);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            HttpContext.Session.Clear();
-            return RedirectToAction("Index");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("LoggedOut");
+        }
+
+        [HttpGet]
+        public IActionResult LoggedOut()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Forbidden()
+        {
+            return View();
         }
 
     }
 }
-
