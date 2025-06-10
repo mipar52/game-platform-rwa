@@ -29,12 +29,15 @@ namespace WebApp.Controllers
         public IActionResult Index(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View(new LoginUserViewModel());
+            return View(new LoginUserViewModel
+            {
+                ReturnUrl = returnUrl ?? string.Empty
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(LoginUserViewModel loginModel, string? returnUrl = null)
+        public async Task<IActionResult> Index(LoginUserViewModel loginModel)
         {
             if (!ModelState.IsValid)
                 return View(loginModel);
@@ -57,6 +60,8 @@ namespace WebApp.Controllers
 
                 if (loginResponse != null)
                 {
+                    
+
                     var claims = new List<Claim>
     {
         new Claim(ClaimTypes.Name, loginModel.Username),
@@ -73,8 +78,8 @@ namespace WebApp.Controllers
                         authProperties
                     );
 
-                    return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
-                        ? LocalRedirect(returnUrl)
+                    return !string.IsNullOrWhiteSpace(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl)
+                        ? LocalRedirect(loginModel.ReturnUrl)
                         : RedirectToAction("Index", "Home");
                 }
 

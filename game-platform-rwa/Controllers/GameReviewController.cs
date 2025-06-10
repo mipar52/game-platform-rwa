@@ -10,9 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace game_platform_rwa.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class GameReviewController : ControllerBase
     {
         private readonly GamePlatformRwaContext context;

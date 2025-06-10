@@ -43,11 +43,11 @@ builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Login/Index";
+        options.LoginPath = "/Login";
         options.LogoutPath = "/Login/LoggedOut";
         options.AccessDeniedPath = "/Login/Forbidden";
         options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(0.5);
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
     });
 
 var app = builder.Build();

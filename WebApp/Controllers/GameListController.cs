@@ -70,7 +70,6 @@ namespace WebApp.Controllers
             return View(viewModel);
         }
 
-
         [HttpGet]
         public async Task<IActionResult> All(int page = 1)
         {
@@ -80,7 +79,6 @@ namespace WebApp.Controllers
                 $"Game/GetPagedGames?page={page}&pageSize={pageSize}");
             var gameVM = _mapper.Map<PagedResult<GameViewModel>>(pagedResult);
             var gameListVM = _mapper.Map<PagedResult<GameListViewModel>>(gameVM);
-
             var viewModel = new PagedGameViewModel
             {
                 Games = gameListVM.Items,

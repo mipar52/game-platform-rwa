@@ -8,6 +8,7 @@ using GamePlatformBL.Utilities;
 using GamePlatformBL.ViewModels;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace WebApp.Services
 {
@@ -26,9 +27,9 @@ namespace WebApp.Services
             private HttpClient CreateClient()
             {
                 var client = _httpClientFactory.CreateClient("ApiClient");
-                var token = _httpContextAccessor.HttpContext.Session.GetString("jwt_token");
-
-                if (!string.IsNullOrEmpty(token))
+                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+            DebugHelper.AppPrintDebugMessage($"TOKEN: {token}");
+            if (!string.IsNullOrEmpty(token))
                 {
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
@@ -62,11 +63,13 @@ namespace WebApp.Services
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // ✅ Add JWT token if available
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
-                if (!string.IsNullOrEmpty(token))
+
+            var token = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken");
+                
+                DebugHelper.AppPrintDebugMessage($"TOKEN: {token}");
+            if (!string.IsNullOrEmpty(token.Value))
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
                 }
 
                 DebugHelper.AppPrintDebugMessage("[WebApp] - Getting the data from: " + _baseUrl + uri);

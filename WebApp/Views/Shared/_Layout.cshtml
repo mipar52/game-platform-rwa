@@ -98,11 +98,17 @@
             </div>
         </footer>
     </div> 
-
+    <div id="logoutModal" class="logout-modal hidden">
+        <div class="logout-modal-content">
+            <h2>⚔️ Don't go :(</h2>
+            <p>Are you sure you want to leave the arena?</p>
+            <button id="confirmLogout" class="btn btn-danger">Yes, log me out</button>
+            <button id="cancelLogout" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
 
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

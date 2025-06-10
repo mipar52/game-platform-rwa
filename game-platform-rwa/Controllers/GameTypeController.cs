@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class GameTypeController : ControllerBase

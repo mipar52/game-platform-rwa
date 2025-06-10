@@ -2,9 +2,11 @@
 using GamePlatformBL.Utilities;
 using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class AccountController : Controller
     {
         private readonly ApiService _apiService;
