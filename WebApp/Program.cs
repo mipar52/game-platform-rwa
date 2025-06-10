@@ -1,18 +1,14 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using GamePlatformBL.AutoMappers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using WebApp.Models;
+using System.Text.Json.Serialization;
 using WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddDbContext<GamePlatformRwaContext>(options => {
-    options.UseSqlServer("name=ConnectionStrings:GamePlatformRWAString");
-});
 
 builder.Services.AddHttpClient("ApiClient", client =>
 {
@@ -33,6 +29,8 @@ var Key = Encoding.UTF8.GetBytes(secureKey);
     };
 });
 
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 builder.Services.AddDistributedMemoryCache(); // ✅ Required
 builder.Services.AddSession(options =>
 {
@@ -41,7 +39,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddHttpContextAccessor();
-//builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 

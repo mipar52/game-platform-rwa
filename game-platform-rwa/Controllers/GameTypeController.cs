@@ -1,7 +1,7 @@
-﻿using game_platform_rwa.DTO_generator;
-using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +13,12 @@ public class GameTypeController : ControllerBase
 {
     private readonly GamePlatformRwaContext context;
     private readonly LogService logService;
-
-    public GameTypeController(GamePlatformRwaContext context, LogService logService)
+    private readonly IMapper _mapper;
+    public GameTypeController(GamePlatformRwaContext context, LogService logService, IMapper mapper)
     {
         this.context = context;
         this.logService = logService;
+        _mapper = mapper;
     }
 
     [HttpGet("[action]")]
@@ -31,7 +32,7 @@ public class GameTypeController : ControllerBase
         try
         {
             var result = context.GameTypes;
-            var mappedResult = result.Select(x => GameDTOGenerator.generateGameTypeDto(x));
+            var mappedResult = _mapper.Map<IEnumerable<GameTypeDto>>(result);
             if (!mappedResult.Any())
             {
                 logService.Log($"Could not find any games types.", "No results");
@@ -64,7 +65,7 @@ public class GameTypeController : ControllerBase
                 return NotFound($"Could not find game with ID {id}");
             }
 
-            var mappedResult = GameDTOGenerator.generateGameTypeDto(result);
+            var mappedResult = _mapper.Map<GameTypeDto>(result);
             logService.Log($"Found {mappedResult.Id} GameType.", "Success");
             return Ok(mappedResult);
         }
@@ -76,7 +77,7 @@ public class GameTypeController : ControllerBase
     }
 
     [HttpGet("[action]")] 
-    public ActionResult<IEnumerable<GameDto>> GetGamesWithGameType(int id)
+    public ActionResult<IEnumerable<SimpleGameDto>> GetGamesWithGameType(int id)
     {
         if (!ModelState.IsValid)
         {
@@ -94,9 +95,7 @@ public class GameTypeController : ControllerBase
             var games = context.Games
                 .Where(g => g.GameTypeId == gameType.Id)
                 .Include(g => g.GameType)
-                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.Reviews)
-                .ToList();
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
 
 
             if (games == null)
@@ -105,7 +104,7 @@ public class GameTypeController : ControllerBase
                 return NotFound($"Could not find any games with game type id{id}");
             }
 
-            var mappedResult = games.Select(x => GameDTOGenerator.generateGameDto(x));
+            var mappedResult = _mapper.Map<IEnumerable<SimpleGameDto>>(games);
             logService.Log($"Found {mappedResult.Count()} games with GameType id={id}.", "Success");
             Console.WriteLine($"Found {mappedResult.Count()} games with GameType id={id}.");
             return Ok(mappedResult);
@@ -117,6 +116,7 @@ public class GameTypeController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("[action]")]
     public IActionResult CreateGameType([FromBody] GameTypeCreateDto gameType)
     {
@@ -126,10 +126,13 @@ public class GameTypeController : ControllerBase
         }
         try
         {
-            var newGameType = new GameType
+            var trimmedName = gameType.Name.Trim();
+            if (context.GameTypes.Any(x => x.Name.Equals(trimmedName)))
             {
-                Name = gameType.Name
-            };
+                logService.Log($"Game Type with name {trimmedName} already exists", "Error");
+                return BadRequest($"Game Type with name {trimmedName} already exists");
+            }
+            var newGameType = _mapper.Map<GameType>(gameType);
 
             context.GameTypes.Add(newGameType);
 
@@ -144,8 +147,9 @@ public class GameTypeController : ControllerBase
 
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("[action]")]
-    public IActionResult UpdateGameType(int id, [FromBody] GameTypeDto updated)
+    public IActionResult UpdateGameType(int id, [FromBody] GameTypeCreateDto updated)
     {
         if (!ModelState.IsValid)
         {
@@ -160,8 +164,7 @@ public class GameTypeController : ControllerBase
                 logService.Log($"Could not update any GameType with id={id}", "No results");
                 return NotFound($"GameType ID {id} not found");
             }
-
-            existing.Name = updated.Name;
+            _mapper.Map(updated, existing);
 
             context.SaveChanges();
             logService.Log($"Updated GameType with id={id}", "Success");

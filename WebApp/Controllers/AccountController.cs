@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers
 {
@@ -31,7 +31,7 @@ namespace WebApp.Controllers
             }
 
             var user = await _apiService.GetAsync<EditUserViewModel>($"User/GetUserById?id={userInfo.Id}");
-            DebugHelper.PrintDebugMessage($"Got the user with ID: {user.Id}");
+            DebugHelper.AppPrintDebugMessage($"Got the user with ID: {user.Id}");
             if (user == null)
             {
                 TempData["Error"] = "User not found.";

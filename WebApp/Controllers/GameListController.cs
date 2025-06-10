@@ -1,20 +1,24 @@
-﻿using Azure.Core;
+﻿using AutoMapper;
+using Azure.Core;
+using GamePlatformBL.DTOs;
+using WebApp.Services;
+using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using WebApp.Models;
-using WebApp.Services;
-using WebApp.ViewModels;
+using GamePlatformBL.Utilities;
+using System;
 
 namespace WebApp.Controllers
 {
     public class GameListController : Controller
     {
         private readonly ApiService _apiService;
-
-        public GameListController(ApiService apiService)
+        private readonly IMapper _mapper;
+        public GameListController(ApiService apiService, IMapper mapper)
         {
             _apiService = apiService;
+            _mapper = mapper;
         }
 
         [HttpPost]
@@ -31,26 +35,14 @@ namespace WebApp.Controllers
                 endpoint = $"Game/GetGamesByTypeAndGenres?gameTypeId={selectedGameTypeId}&{queryString}";
             }
 
-
-            var games = await _apiService.GetAsync<List<GameViewModel>>(endpoint);
+            var games = await _apiService.GetAsync<List<SimpleGameDto>>(endpoint);
             if (games == null || games.Count == 0)
             {
                 return View();
             }
-            var viewModel = games.Select(g => new GameListViewModel
-            {
-                Id = g.Id,
-                Name = g.Name,
-                Description = g.Description,
-                ImagePath = g.ImagePath,
-                ImageUrl = g.ImageUrl,
-                GenreName = string.Join(", ", g.Genres.Select(x => x.Name)),
-                GameType = new GameTypeViewModel
-                {
-                    Id = g.GameType.Id,
-                    Name = g.GameType.Name
-                }
-            }).ToList();
+            var result = _mapper.Map<List<GameViewModel>>(games);
+
+            var viewModel = _mapper.Map<IEnumerable<GameListViewModel>>(result).ToList();
 
             return View(viewModel);
         }
@@ -58,24 +50,10 @@ namespace WebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> All()
         {
-            var allGames = await _apiService.GetAsync<List<GameViewModel>>("Game/GetAllGames");
-
-            var viewModel = allGames.Select(g => new GameListViewModel
-            {
-                Id = g.Id,
-                Name = g.Name,
-                Description = g.Description,
-                ImageUrl = g.ImageUrl,
-                ImagePath = g.ImagePath,
-                GenreName = string.Join(", ", g.Genres.Select(x => x.Name)),
-                GameType = new GameTypeViewModel
-                {
-                    Id = g.GameType.Id,
-                    Name = g.GameType.Name
-                }
-            }).ToList();
-
-            return View("Index", viewModel); // reuse existing Index view
+            var allGames = await _apiService.GetAsync<List<SimpleGameDto>>("Game/GetAllGames");
+            var gameVM = _mapper.Map<List<GameViewModel>>(allGames);
+            var viewModel = _mapper.Map<IEnumerable<GameListViewModel>>(gameVM).ToList();
+            return View("Index", viewModel);
         }
 
     }

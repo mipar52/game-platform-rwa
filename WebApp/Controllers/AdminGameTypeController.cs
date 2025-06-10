@@ -1,23 +1,26 @@
 ﻿// CONTROLLER: AdminGameTypeController.cs
-using Microsoft.AspNetCore.Mvc;
 using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using GamePlatformBL.DTOs;
 
 namespace WebApp.Controllers.Admin
 {
     public class AdminGameTypeController : Controller
     {
         private readonly ApiService _apiService;
-
-        public AdminGameTypeController(ApiService apiService)
+        private readonly IMapper _mapper;
+        public AdminGameTypeController(ApiService apiService, IMapper mapper)
         {
             _apiService = apiService;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index()
         {
-            var gameTypes = await _apiService.GetAsync<List<GameTypeViewModel>>("GameType/GetAllGameTypes");
+            var gameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
             return View(gameTypes);
         }
 
@@ -26,7 +29,7 @@ namespace WebApp.Controllers.Admin
             if (id == null)
                 return View(new GameTypeViewModel());
 
-            var gameType = await _apiService.GetAsync<GameTypeViewModel>($"GameType/GetGameTypeById?id={id}");
+            var gameType = _mapper.Map<GameTypeViewModel>(await _apiService.GetAsync<GameTypeDto>($"GameType/GetGameTypeById?id={id}"));
             return View(gameType);
         }
 
@@ -35,11 +38,12 @@ namespace WebApp.Controllers.Admin
         {
             if (!ModelState.IsValid) return View(model);
 
+            var dto = _mapper.Map<GameTypeDto>(model);
             HttpResponseMessage response = model.Id == 0
-                ? await _apiService.PostAsync("GameType/CreateGameType", model)
-                : await _apiService.PutWithResponseAsync($"GameType/UpdateGameType?id={model.Id}", model);
+                ? await _apiService.PostAsync("GameType/CreateGameType", dto)
+                : await _apiService.PutWithResponseAsync($"GameType/UpdateGameType?id={dto.Id}", dto);
 
-            DebugHelper.PrintDebugMessage($"GameType action status: {response}");
+            DebugHelper.AppPrintDebugMessage($"GameType action status: {response}, message: {response.RequestMessage}");
 
             if (response.IsSuccessStatusCode)
                 return RedirectToAction("Index");

@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApp.Services;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers
 {

@@ -1,4 +1,4 @@
-﻿@model WebApp.ViewModels.AdminGameViewModel
+﻿@model GamePlatformBL.ViewModels.AdminGameViewModel
 
 @{
     ViewData["Title"] = Model.Id == 0 ? "Create Game" : "Update Game";
@@ -48,7 +48,7 @@
     <div class="mb-3">
         <label><strong>Select Game Type</strong></label>
         <div class="btn-group d-flex flex-wrap" role="group">
-            @foreach (var type in ViewBag.GameTypes as List<WebApp.ViewModels.GameTypeViewModel>)
+            @foreach (var type in ViewBag.GameTypes as List<GamePlatformBL.ViewModels.GameTypeViewModel>)
             {
                 <input type="radio" class="btn-check" name="SelectedGameTypeId" id="type-@type.Id" value="@type.Id"
                        checked="@(Model.GameType?.Id == type.Id)">
@@ -61,10 +61,10 @@
     <div class="mb-3">
         <label><strong>Select Genres</strong></label>
         <div class="btn-group d-flex flex-wrap" role="group">
-            @foreach (var genre in ViewBag.Genres as List<WebApp.ViewModels.GameGenreViewModel>)
+            @foreach (var genre in ViewBag.Genres as List<GamePlatformBL.ViewModels.GenreViewModel>)
             {
                 <input type="checkbox" class="btn-check" name="SelectedGenreIds" id="genre-@genre.Id" value="@genre.Id"
-                       checked="@(Model.Genres.Any(g => g.Id == genre.Id))">
+                       checked="@(Model.GameGenres.Any(g => g.Genre.Id == genre.Id))">
                 <label class="btn btn-outline-success m-1" for="genre-@genre.Id">@genre.Name</label>
             }
         </div>

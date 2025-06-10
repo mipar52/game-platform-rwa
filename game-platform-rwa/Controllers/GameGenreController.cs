@@ -1,7 +1,7 @@
-﻿using game_platform_rwa.DTO_generator;
-using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +15,17 @@ namespace game_platform_rwa.Controllers
     {
         private GamePlatformRwaContext context;
         private readonly LogService logService;
+        private readonly IMapper _mapper;
 
-        public GameGenreController(GamePlatformRwaContext context, LogService logService)
+        public GameGenreController(GamePlatformRwaContext context, LogService logService, IMapper mapper)
         {
             this.context = context;
             this.logService = logService;
+            _mapper = mapper;
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Genre>> GetAllGenres()
+        public ActionResult<IEnumerable<GenreDto>> GetAllGenres()
         {
             if (!ModelState.IsValid)
             {
@@ -33,7 +35,7 @@ namespace game_platform_rwa.Controllers
             try
             {
                 var result = context.Genres;
-                var mappedResult = result.Select(x => GameDTOGenerator.generateGenreDto(x));
+                var mappedResult = _mapper.Map<IEnumerable<GenreDto>>(result);
 
                 if (!mappedResult.Any())
                 {
@@ -69,7 +71,7 @@ namespace game_platform_rwa.Controllers
                     return NotFound($"Could not find genre with ID {id}");
                 }
 
-                var mappedResult = GameDTOGenerator.generateGenreDto(result);
+                var mappedResult = _mapper.Map<GenreDto>(result);
                 logService.Log($"Genre '{mappedResult.Name}' with id={id} found.");
                 return Ok(mappedResult);
             }
@@ -110,9 +112,9 @@ namespace game_platform_rwa.Controllers
                     return NotFound("No games matched the selected genres.");
                 }
 
-                var result = games.Select(g => GameDTOGenerator.generateGameDto(g)).ToList();
-                logService.Log($"Found {result.Count} games with genre IDs: {string.Join(",", genreIds)}", "Success");
-                return Ok(result);
+                var mappedResult = _mapper.Map<IEnumerable<GameDto>>(games);
+                logService.Log($"Found {mappedResult.Count()} games with genre IDs: {string.Join(",", genreIds)}", "Success");
+                return Ok(mappedResult);
             }
             catch (Exception ex)
             {
@@ -132,10 +134,13 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var newGenre = new Genre
+                var trimmedName = genre.Name.Trim();
+                if (context.Genres.Any(x => x.Name.Equals(trimmedName)))
                 {
-                    Name = genre.Name
-                };
+                    logService.Log($"Genre with name {trimmedName} already exists", "Error");
+                    return BadRequest($"Genre with name {trimmedName} already exists");
+                }
+                var newGenre = _mapper.Map<Genre>(genre);
 
                 context.Genres.Add(newGenre);
                 context.SaveChanges();
@@ -162,15 +167,15 @@ namespace game_platform_rwa.Controllers
             {
                 var existing = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
                 if (existing == null) return NotFound($"Genre ID {id} not found");
-
+               // _mapper.Map(updated, existing);
                 existing.Name = updated.Name;
-
-                context.GameGenres.RemoveRange(existing.GameGenres);
+                /*
+                                 context.GameGenres.RemoveRange(existing.GameGenres);
                 foreach (var genre in existing.GameGenres)
                 {
                     context.GameGenres.Add(new GameGenre { GameId = id, GenreId = context.Genres.FirstOrDefault(g => g.Id == existing.Id)?.Id ?? 0 });
                 }
-
+                 */
                 context.SaveChanges();
                 logService.Log($"Genre '{existing.Name}' with id={existing.Id} updated.");
 

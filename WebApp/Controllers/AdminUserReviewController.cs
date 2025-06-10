@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using WebApp.Services;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
-using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
 
 namespace WebApp.Controllers
 {
@@ -39,7 +39,7 @@ namespace WebApp.Controllers
                 return RedirectToAction("Index");
             } else
             {
-                DebugHelper.PrintDebugMessage($"ToggleApproval Response: {response.StatusCode}");
+                DebugHelper.AppPrintDebugMessage($"ToggleApproval Response: {response.StatusCode}");
                 TempData["Error"] = "Failed to toggle approval.";
                 return RedirectToAction("Index");
             }

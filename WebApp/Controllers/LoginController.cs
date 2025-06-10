@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Text;
-using WebApp.ViewModels;
-using WebApp.Utilities;
+using GamePlatformBL.ViewModels;
 using WebApp.Services;
+using GamePlatformBL.Utilities;
+using AutoMapper;
+using GamePlatformBL.DTOs;
 
 namespace WebApp.Controllers
 {
@@ -12,11 +13,12 @@ namespace WebApp.Controllers
     {
         private readonly IHttpClientFactory _clientFactory;
         private readonly ApiService _apiService;
-
-        public LoginController(ApiService apiService, IHttpClientFactory clientFactory)
+        private readonly IMapper _mapper;
+        public LoginController(ApiService apiService, IHttpClientFactory clientFactory, IMapper mapper)
         {
             _apiService = apiService;
             _clientFactory = clientFactory;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -36,7 +38,7 @@ namespace WebApp.Controllers
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync("http://localhost:5062/api/User/Login", content);
-            DebugHelper.PrintDebugMessage($"Login Status: {response.IsSuccessStatusCode}");
+            DebugHelper.AppPrintDebugMessage($"Login Status: {response.IsSuccessStatusCode}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -46,8 +48,7 @@ namespace WebApp.Controllers
                 return RedirectToAction("Index", "Home");
 
             }
-
-            ModelState.AddModelError(string.Empty, "Invalid username or password.");
+            TempData["Error"] = "Invalid username or password.";
             return View(loginModel);
         }
 
@@ -66,7 +67,9 @@ namespace WebApp.Controllers
             {
                 return View(model);
             }
-            HttpResponseMessage response = await _apiService.PostAsync("User/RegisterUser", model);
+
+            var dto = _mapper.Map<UserDto>(model);
+            HttpResponseMessage response = await _apiService.PostAsync("User/RegisterUser", dto);
 
             if (response.IsSuccessStatusCode)
             {
@@ -74,7 +77,7 @@ namespace WebApp.Controllers
                 return RedirectToAction("Index");
             }
 
-            TempData["Error"] = "Failed to save user.";
+            TempData["Error"] = $"Failed to save user. Reason: {response.StatusCode}";
             return View(model);
         }
 

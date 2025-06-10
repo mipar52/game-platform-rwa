@@ -1,44 +1,48 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using GamePlatformBL.DTOs;
+using System.Collections.Generic;
 
 namespace WebApp.Controllers
 {
     public class AdminGameGenreController : Controller
     {
         private readonly ApiService _apiService;
-
-        public AdminGameGenreController(ApiService apiService)
+        private readonly IMapper _mapper;
+        public AdminGameGenreController(ApiService apiService, IMapper mapper)
         {
             _apiService = apiService;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index()
         {
-            var gameTypes = await _apiService.GetAsync<List<GameGenreViewModel>>("GameGenre/GetAllGenres");
+            var gameTypes = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
             return View(gameTypes);
         }
 
         public async Task<IActionResult> Create(int? id)
         {
             if (id == null)
-                return View(new GameGenreViewModel());
+                return View(new GenreViewModel());
 
-            var gameType = await _apiService.GetAsync<GameGenreViewModel>($"GameGenre/GetGenreById?id={id}");
+            var gameType = _mapper.Map<GenreViewModel>(await _apiService.GetAsync<GenreDto>($"GameGenre/GetGenreById?id={id}"));
             return View(gameType);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(GameGenreViewModel model)
+        public async Task<IActionResult> Create(GenreViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
-
+            var dto = _mapper.Map<GenreDto>(model);
             HttpResponseMessage response = model.Id == 0
-                ? await _apiService.PostAsync("GameGenre/CreateGenre", model)
-                : await _apiService.PutWithResponseAsync($"GameGenre/UpdateGenre?id={model.Id}", model);
+                ? await _apiService.PostAsync("GameGenre/CreateGenre", dto)
+                : await _apiService.PutWithResponseAsync($"GameGenre/UpdateGenre?id={dto.Id}", dto);
 
-            DebugHelper.PrintDebugMessage($"GameGenre action status: {response}");
+            DebugHelper.AppPrintDebugMessage($"GameGenre action status: {response}");
 
             if (response.IsSuccessStatusCode)
                 return RedirectToAction("Index");

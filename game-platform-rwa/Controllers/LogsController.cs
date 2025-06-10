@@ -1,7 +1,6 @@
-﻿using game_platform_rwa.DTO_generator;
-using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +15,11 @@ namespace game_platform_rwa.Controllers
     public class LogsController : ControllerBase
     {
         private readonly GamePlatformRwaContext context;
-
-        public LogsController(GamePlatformRwaContext context)
+        private readonly IMapper _mapper;
+        public LogsController(GamePlatformRwaContext context, IMapper mapper)
         {
             this.context = context;
+            this._mapper = mapper;
         }
 
         [HttpGet("[action]")]
@@ -33,7 +33,7 @@ namespace game_platform_rwa.Controllers
             try
             {
                 var result = context.LogEntries;
-                var mappedResult = result.Select(x => LogDtoGenerator.generateLogDto(x));
+                var mappedResult = _mapper.Map<IEnumerable<LogDto>>(result);
                 return Ok(mappedResult);
             }
             catch (Exception ex)
@@ -53,13 +53,14 @@ namespace game_platform_rwa.Controllers
             try
             {
                 var result = context.LogEntries;
-                var mappedResult = 
+                var mappedResult =
                     result
                     .OrderByDescending(l => l.Timestamp)
-                    .Take(count)
-                    .Select(x => LogDtoGenerator.generateLogDto(x));
+                    .Take(count);
 
-                return Ok(mappedResult);
+                var logDtos = _mapper.Map<IEnumerable<LogDto>>(result);
+
+                return Ok(logDtos);
             }
             catch (Exception ex)
             {
@@ -78,7 +79,7 @@ namespace game_platform_rwa.Controllers
             try
             {
                 var result = context.LogEntries;
-                var mappedResult = result.Select(x => LogDtoGenerator.generateLogDto(x));
+                var mappedResult = _mapper.Map<IEnumerable<LogDto>>(result);
                 if (!mappedResult.Any())
                     return NotFound("Could not find any logs.");
                 
