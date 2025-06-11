@@ -28,7 +28,6 @@ namespace WebApp.Controllers
         {
             const int pageSize = 6;
             string endpoint;
-            DebugHelper.AppPrintDebugMessage("HERE!!");
             if (selectedGenreIds == null || selectedGenreIds.Count == 0)
             {
                 endpoint = $"GameType/GetGamesWithGameTypePaged?id={selectedGameTypeId}&page={page}&pageSize={pageSize}";
@@ -70,6 +69,40 @@ namespace WebApp.Controllers
             return View(viewModel);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> GetFilteredGamesAjax(int selectedGameTypeId, List<int> selectedGenreIds, int page = 1)
+        {
+            const int pageSize = 6;
+            string endpoint;
+
+            if (selectedGenreIds == null || selectedGenreIds.Count == 0)
+            {
+                endpoint = $"GameType/GetGamesWithGameTypePaged?id={selectedGameTypeId}&page={page}&pageSize={pageSize}";
+            }
+            else
+            {
+                var queryString = string.Join("&", selectedGenreIds.Select(id => $"genreIds={id}"));
+                endpoint = $"Game/GetGamesByTypeAndGenresPaged?gameTypeId={selectedGameTypeId}&{queryString}&page={page}&pageSize={pageSize}";
+            }
+
+            var pagedResult = await _apiService.GetAsync<PagedResult<SimpleGameDto>>(endpoint);
+            var gameVM = _mapper.Map<PagedResult<GameViewModel>>(pagedResult);
+            var gameListVM = _mapper.Map<PagedResult<GameListViewModel>>(gameVM);
+
+            var viewModel = new PagedGameViewModel
+            {
+                Games = gameListVM.Items,
+                CurrentPage = pagedResult.CurrentPage,
+                PageSize = pagedResult.PageSize,
+                TotalCount = pagedResult.TotalCount,
+                SelectedGameTypeId = selectedGameTypeId,
+                SelectedGenreIds = selectedGenreIds
+            };
+
+            return PartialView("_FilteredGamesPartial", viewModel);
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> All(int page = 1)
         {
@@ -88,5 +121,28 @@ namespace WebApp.Controllers
             };
             return View(viewModel);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetGamesAjax(int page = 1)
+        {
+            const int pageSize = 6;
+
+            var pagedResult = await _apiService.GetAsync<PagedResult<SimpleGameDto>>(
+                $"Game/GetPagedGames?page={page}&pageSize={pageSize}");
+
+            var gameVM = _mapper.Map<PagedResult<GameViewModel>>(pagedResult);
+            var gameListVM = _mapper.Map<PagedResult<GameListViewModel>>(gameVM);
+
+            var viewModel = new PagedGameViewModel
+            {
+                Games = gameListVM.Items,
+                CurrentPage = pagedResult.CurrentPage,
+                PageSize = pagedResult.PageSize,
+                TotalCount = pagedResult.TotalCount
+            };
+
+            return PartialView("_GameCardsPartial", viewModel);
+        }
+
     }
 }

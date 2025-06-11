@@ -97,6 +97,22 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("Search")]
+        public async Task<IActionResult> Search(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest("Query is required");
+
+            var results = await context.Games
+                .Where(g => g.Name.Contains(query))
+                .Select(g => new { g.Id, g.Name })
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
+
 
         [HttpGet("[action]")]
         public ActionResult<GameDto> GetGameById(int id)

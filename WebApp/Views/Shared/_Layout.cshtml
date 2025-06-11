@@ -24,7 +24,9 @@
     <script>
         console.log('current root: ' + window.location.origin);
     </script>
-    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
     <script src="~/js/logout.js" asp-append-version="true"></script>
 
 
@@ -39,15 +41,26 @@
                     <div class="container">
                         <a class="navbar-brand" asp-controller="Home" asp-action="Index">Game Platform RWA</a>
                         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span class="navbar-toggler-icon"></span>
                         </button>
 
-                        <div class="collapse navbar-collapse" id="navbarContent">
-                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
+                            <!-- LEFT SIDE: Logo + Main Navigation -->
+                            <ul class="navbar-nav mb-2 mb-lg-0">
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-danger fw-bold" asp-controller="GameType" asp-action="Index">Search Games</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="GameList" asp-action="All">View All Games</a>
+                                </li>
+                            </ul>
+
+                            <!-- RIGHT SIDE: Account + Admin + Greeting + Logout -->
+                            <ul class="navbar-nav align-items-center">
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
                                 </li>
@@ -57,9 +70,6 @@
                                         <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
                                     </li>
                                 }
-                            </ul>
-
-                            <ul class="navbar-nav ms-auto align-items-center">
                                 <li class="nav-item">
                                     <span class="user-greeting me-2 text-light" style="font-family: 'Orbitron'; font-weight: 500;">
                                         Hello, @username!
@@ -74,6 +84,7 @@
                         </div>
                     </div>
                 </nav>
+
             }
         </header>
 
@@ -109,6 +120,7 @@
 
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

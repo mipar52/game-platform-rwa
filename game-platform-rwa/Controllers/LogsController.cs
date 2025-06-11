@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GamePlatformBL.DTOs;
 using GamePlatformBL.Models;
+using GamePlatformBL.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,13 +53,12 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.LogEntries;
-                var mappedResult =
-                    result
+                var mappedResult = context.LogEntries
                     .OrderByDescending(l => l.Timestamp)
-                    .Take(count);
-
-                var logDtos = _mapper.Map<IEnumerable<LogDto>>(result);
+                    .Take(count)
+                    .ToList();
+                DebugHelper.ApiPrintDebugMessage($"Log count: {mappedResult.Count}");
+                var logDtos = _mapper.Map<IEnumerable<LogDto>>(mappedResult);
 
                 return Ok(logDtos);
             }

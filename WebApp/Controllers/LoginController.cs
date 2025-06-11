@@ -78,7 +78,7 @@ namespace WebApp.Controllers
                         authProperties
                     );
 
-                    return !string.IsNullOrWhiteSpace(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl)
+                    return !string.IsNullOrEmpty(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl)
                         ? LocalRedirect(loginModel.ReturnUrl)
                         : RedirectToAction("Index", "Home");
                 }

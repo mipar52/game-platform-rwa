@@ -88,9 +88,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy
-            .AllowAnyOrigin() // .WithOrigins("http://localhost:5196")
+            .WithOrigins("http://localhost:5196")
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -104,12 +105,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Allow CORS for AJAX requests from WebApp
+app.UseCors("AllowAll");
+
 // Use authentication / authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseCors("AllowAll");
 
 app.Run();

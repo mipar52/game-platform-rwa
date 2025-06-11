@@ -3,6 +3,7 @@ using GamePlatformBL.Utilities;
 using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using GamePlatformBL.DTOs;
 
 namespace WebApp.Controllers
 {
@@ -46,28 +47,55 @@ namespace WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Manage(EditUserViewModel model)
+        public async Task<IActionResult> Manage([FromBody] EditUserViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
+            {
+                DebugHelper.AppPrintDebugMessage($"User new info model state: {ModelState}");
+                return BadRequest(ModelState);
+            }
+                
 
+            DebugHelper.AppPrintDebugMessage($"User new info: {model}");
             var result = await _apiService.PutWithResponseAsync($"User/Update/{model.Id}", model);
 
             if (result.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Your account has been updated.";
-
                 var updatedUser = await _apiService.GetAsync<EditUserViewModel>($"User/GetUserById?id={model.Id}");
-
                 if (updatedUser != null)
                     HttpContext.Session.SetString("Username", updatedUser.Username);
 
-                return RedirectToAction("Index");
+                return Ok(new { message = "Updated successfully" });
             }
 
-            ModelState.AddModelError("", "Update failed. Please try again.");
-            return View(model);
+            return BadRequest(new { error = "Update failed." });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                DebugHelper.AppPrintDebugMessage($"Change password model state: {ModelState}");
+                return BadRequest("Invalid model.");
+            }
+                
+
+            DebugHelper.AppPrintDebugMessage($"Current: {model.CurrentPassword}, new: {model.NewPassword}");
+            if (model.NewPassword != model.CurrentPassword)
+                return BadRequest("Passwords do not match.");
+
+            var response = await _apiService.PostAsync("User/ChangePassword", model);
+
+            if (response.IsSuccessStatusCode)
+                return Ok("Password updated successfully.");
+
+            var errorMsg = await response.Content.ReadAsStringAsync();
+            return BadRequest(errorMsg);
+        }
+
+
 
         public async Task<IActionResult> Reviews()
         {

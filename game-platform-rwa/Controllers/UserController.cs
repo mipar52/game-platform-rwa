@@ -116,28 +116,12 @@ namespace game_platform_rwa.Controllers
                 }
 
                 // Update editable fields
-                user = _mapper.Map<User>(dto);
-
-                if (dto.ConfirmPassword != dto.ConfirmPassword)
-                {
-                    logService.Log($"Updated user with ID={id} failed! Passwords do not match!", "Error");
-                    return StatusCode(400, "Passwords do not match!");
-                }
-
-                // Optional password update
-                if (!string.IsNullOrWhiteSpace(dto.NewPassword))
-                {
-                    var newSalt = PasswordHashProvider.GetSalt();
-                    var newHash = PasswordHashProvider.GetHash(dto.NewPassword, newSalt);
-
-                    user.PwdSalt = newSalt;
-                    user.PwdHash = newHash;
-                }
+                _mapper.Map(dto, user);
 
                 await context.SaveChangesAsync();
 
                 logService.Log($"Updated user info for user ID={id}", "Success");
-                return Ok("User updated successfully");
+                return Ok(new { message = "Information updated successfully! Good work!" });
             }
             catch (Exception ex)
             {
@@ -254,7 +238,7 @@ namespace game_platform_rwa.Controllers
 
         [HttpPost("[action]")]
         [Authorize] // Only logged-in users can change password
-        public IActionResult ChangePassword([FromBody] ChangePasswordDto dto)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -263,10 +247,7 @@ namespace game_platform_rwa.Controllers
             
             try
             {
-                var identity = HttpContext.User.Identity as ClaimsIdentity;
-                var username = identity?.FindFirst(ClaimTypes.Name)?.Value;
-                
-                var user = context.Users.FirstOrDefault(u => u.Username == username);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id == dto.Id);
                 if (user == null)
                 {
                     logService.Log("User not found to change the password.", "Error");

@@ -34,7 +34,6 @@ namespace WebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddComment(CreateReviewViewModel viewModel)
         {
-            // Optional: validate again
             if (viewModel.Rating < 1 || viewModel.Rating > 10)
             {
                 TempData["Error"] = "Invalid rating.";

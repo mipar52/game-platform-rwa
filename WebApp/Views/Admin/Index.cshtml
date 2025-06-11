@@ -2,25 +2,53 @@
     ViewData["Title"] = "Admin Panel";
 }
 
-<div class="container mt-5">
-    <h2 class="text-danger">Admin Panel</h2>
-    <p class="text-muted">Manage platform content and users.</p>
+<link rel="stylesheet" href="~/css/admin-panel.css" asp-append-version="true" />
 
-    <div class="row mt-4">
-        <div class="col-md-3 mb-3">
-            <a asp-controller="AdminGame" asp-action="Index" class="btn btn-outline-danger w-100">Games</a>
+<div class="container mt-5">
+    <h1 class="neon-header text-center mb-4">⚙️ Gamer Admin Panel</h1>
+    <p class="text-center text-muted mb-5">Take control of your gaming universe – manage games, users, and content with style.</p>
+
+    <div class="row g-4 justify-content-center">
+
+        <div class="col-md-4">
+            <div class="admin-card border-danger">
+                <h4><i class="bi bi-controller"></i> Manage Games</h4>
+                <p class="text-muted">Add, edit, or delete games from the platform. Keep your library fresh.</p>
+                <a asp-controller="AdminGame" asp-action="Index" class="btn btn-danger w-100">Go to Games</a>
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <a asp-controller="AdminGameType" asp-action="Index" class="btn btn-outline-danger w-100">Game Types</a>
+
+        <div class="col-md-4">
+            <div class="admin-card border-warning">
+                <h4><i class="bi bi-joystick"></i> Game Types</h4>
+                <p class="text-muted">Organize games into meaningful types like Singleplayer, Co-op, or Online.</p>
+                <a asp-controller="AdminGameType" asp-action="Index" class="btn btn-warning w-100">Manage Types</a>
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <a asp-controller="AdminGameGenre" asp-action="Index" class="btn btn-outline-danger w-100">Genres</a>
+
+        <div class="col-md-4">
+            <div class="admin-card border-info">
+                <h4><i class="bi bi-tags"></i> Genres</h4>
+                <p class="text-muted">Define genres like FPS, RPG, Strategy – and assign them to games.</p>
+                <a asp-controller="AdminGameGenre" asp-action="Index" class="btn btn-info w-100">Edit Genres</a>
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <a asp-controller="AdminUser" asp-action="Index" class="btn btn-outline-danger w-100">Users</a>
+
+        <div class="col-md-4">
+            <div class="admin-card border-secondary">
+                <h4><i class="bi bi-people"></i> Users</h4>
+                <p class="text-muted">View registered players, manage roles, and keep things in check.</p>
+                <a asp-controller="AdminUser" asp-action="Index" class="btn btn-secondary w-100">User Management</a>
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <a asp-controller="AdminUserReview" asp-action="Index" class="btn btn-outline-danger w-100">Reviews</a>
+
+        <div class="col-md-4">
+            <div class="admin-card border-light">
+                <h4><i class="bi bi-chat-square-text"></i> Reviews</h4>
+                <p class="text-muted">Moderate user-submitted reviews. Maintain platform quality and tone.</p>
+                <a asp-controller="AdminUserReview" asp-action="Index" class="btn btn-light text-dark w-100">Moderate Reviews</a>
+            </div>
         </div>
+
     </div>
 </div>

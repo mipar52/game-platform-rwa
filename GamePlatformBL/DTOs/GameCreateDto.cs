@@ -21,7 +21,7 @@ namespace GamePlatformBL.DTOs
         [Required(ErrorMessage = "You need to enter at least one genre!")]
         public List<int> GenreIds { get; set; } = new();
 
-        public bool GameOfTheYearAward { get; set; } = false;
+        public bool WonGameOfTheYear { get; set; } = false;
 
         public int MetaCriticScore { get; set; } = 0;
         public string? ImagePath { get; set; }
