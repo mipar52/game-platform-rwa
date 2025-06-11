@@ -1,7 +1,7 @@
-﻿using game_platform_rwa.DTO_generator;
-using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,18 +10,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace game_platform_rwa.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class GameReviewController : ControllerBase
     {
         private readonly GamePlatformRwaContext context;
         private readonly LogService logService;
+        private readonly IMapper _mapper;
 
-        public GameReviewController(GamePlatformRwaContext context, LogService logService)
+        public GameReviewController(GamePlatformRwaContext context, LogService logService, IMapper mapper)
         {
             this.context = context;
             this.logService = logService;
+            _mapper = mapper;
         }
 
         [HttpGet("GetAllReviews")]
@@ -41,9 +43,9 @@ namespace game_platform_rwa.Controllers
                     return NotFound("No reviews found.");
                 }
 
-                var result = reviews.Select(GameDTOGenerator.generateGameReviewDto).ToList();
+                var result = _mapper.Map<IEnumerable<GameReviewDto>>(reviews);
 
-                logService.Log($"Retrieved all {result.Count} reviews.", "Success");
+                logService.Log($"Retrieved all {result.Count()} reviews.", "Success");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -74,7 +76,7 @@ namespace game_platform_rwa.Controllers
                     return NotFound($"No reviews found for game ID {gameId}");
 
                 }
-                var result = reviews.Select(x => GameDTOGenerator.generateGameReviewDto(x));
+                var result = _mapper.Map<IEnumerable<GameReviewDto>>(reviews);
                 logService.Log($"Found {result.Count()} for game with id={gameId}", "Success");
                 return Ok(result);
             }
@@ -108,7 +110,7 @@ namespace game_platform_rwa.Controllers
                 }
 
                 // Map to DTO and assign game name directly
-                var gameReviews = reviews.Select(r => GameDTOGenerator.generateUserGameReviewDto(r));
+                var gameReviews = _mapper.Map<IEnumerable<UserGameReviewDto>>(reviews);
 
                 logService.Log($"Found {gameReviews.Count()} reviews for user with id={userId}", "Success");
                 return Ok(gameReviews);
@@ -129,15 +131,7 @@ namespace game_platform_rwa.Controllers
             }
             try
             {
-                var newReview = new Review
-                {
-                    UserId = review.UserId,
-                    GameId = review.GameId,
-                    Rating = review.Rating,
-                    ReviewText = review.ReviewText,
-                    Approved = false,
-                    CreatedAt = DateTime.UtcNow
-                };
+                var newReview = _mapper.Map<Review>(review);
                 context.Reviews.Add(newReview);
 
                 var game = context.Games.FirstOrDefault(g => g.Id == review.GameId);
@@ -218,10 +212,7 @@ namespace game_platform_rwa.Controllers
                     logService.Log($"Could not update the review with gameId={gameId}. It could be found.", "No results");
                     return NotFound("Review not found.");
                 }
-
-                review.Rating = updated.Rating;
-                review.ReviewText = updated.ReviewText;
-                review.Approved = updated.Approved;
+                review = _mapper.Map<Review>(updated);
 
                 context.SaveChanges();
                 logService.Log($"Updated the review with gameId={gameId}.", "Success");

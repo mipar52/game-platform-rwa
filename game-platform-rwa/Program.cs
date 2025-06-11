@@ -1,10 +1,12 @@
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+using GamePlatformBL.AutoMappers;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Diagnostics.Eventing.Reader;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -40,6 +42,7 @@ builder.Services
         };
     });
 builder.Services.AddScoped<LogService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddSwaggerGen(option =>
 {
@@ -85,9 +88,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy
-            .AllowAnyOrigin() // .WithOrigins("http://localhost:5196")
+            .WithOrigins("http://localhost:5196")
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -101,12 +105,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Allow CORS for AJAX requests from WebApp
+app.UseCors("AllowAll");
+
 // Use authentication / authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseCors("AllowAll");
 
 app.Run();

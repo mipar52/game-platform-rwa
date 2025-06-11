@@ -1,32 +1,58 @@
-﻿@model List<WebApp.ViewModels.GameListViewModel>
+﻿@model GamePlatformBL.ViewModels.PagedGameViewModel
 
 @{
     ViewData["Title"] = "Game List";
 }
 
-<h2>Games</h2>
 
-@if (Model == null || !Model.Any())
+@if (Model.Games == null || !Model.Games.Any())
 {
+    <h2 class="text-danger">No games for you</h2>
     <p>Looks like you are too picky! We currently do not have any games with the selected filter, choose another filter!</p>
+    <button class="btn btn-outline-danger mt-3" onclick="history.back()">Go Back</button>
 }
 else
 {
-    <div class="row">
-        @foreach (var game in Model)
-        {
-            <div class="col-md-4 mb-4">
-                <a asp-controller="GameDetails" asp-action="Index" asp-route-id="@game.Id" class="text-decoration-none">
-                    <div class="card bg-dark text-light border-danger h-100">
-                        <img src="@(!string.IsNullOrEmpty(game.ImageUrl) ? game.ImageUrl : "https://media.gq-magazine.co.uk/photos/645b5c3c8223a5c3801b8b26/16:9/w_1920,c_limit/100-best-games-hp-b.jpg")" alt="@game.Name" class="card-img-top" style="height: 200px; object-fit: cover;" />
-                        <div class="card-body">
-                            <h5 class="card-title">@game.Name</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">@game.GenreName - @game.GameType.Name</h6>
-                            <p class="card-text">@game.Description</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        }
+    <h2 class="text-danger">Games</h2>
+    <div id="filteredGamesContainer">
+        @await Html.PartialAsync("_FilteredGamesPartial", Model)
     </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const selectedGameTypeId = @Model.SelectedGameTypeId;
+            const selectedGenreIds = @Html.Raw(Json.Serialize(Model.SelectedGenreIds));
+
+            function loadFilteredGames(page) {
+                $.ajax({
+                    type: "POST",
+                    url: "/GameList/GetFilteredGamesAjax",
+                    data: {
+                        selectedGameTypeId: selectedGameTypeId,
+                        selectedGenreIds: selectedGenreIds,
+                        page: page
+                    },
+                    success: function (html) {
+                        $("#filteredGamesContainer").html(html).fadeIn();;
+                        bindPaginationButtons();
+                    },
+                    error: function () {
+                        alert("Failed to load filtered games.");
+                    }
+                });
+            }
+
+            function bindPaginationButtons() {
+                $(".filtered-page-btn").off("click").on("click", function (e) {
+                    e.preventDefault();
+                    const page = $(this).data("page");
+                    loadFilteredGames(page);
+                });
+            }
+
+            bindPaginationButtons();
+        });
+    </script>
 }

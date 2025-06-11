@@ -1,17 +1,24 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
     const logoutForm = document.getElementById("logoutForm");
     const logoutButton = document.getElementById("logoutButton");
+    const logoutModal = document.getElementById("logoutModal");
+    const confirmLogout = document.getElementById("confirmLogout");
+    const cancelLogout = document.getElementById("cancelLogout");
 
-    if (!logoutForm || !logoutButton) return;
+    if (!logoutForm || !logoutButton || !logoutModal) return;
 
     logoutButton.addEventListener("click", function (e) {
         e.preventDefault();
+        logoutModal.classList.remove("hidden");
+    });
 
-        const confirmed = confirm("Are you sure you want to log out?");
-        if (confirmed) {
-            logoutForm.submit();
-            localStorage.clear();
-            localStorage.setItem("logout", Date.now());
-        }
+    confirmLogout.addEventListener("click", function () {
+        localStorage.clear();
+        localStorage.setItem("logout", Date.now());
+        logoutForm.submit();
+    });
+
+    cancelLogout.addEventListener("click", function () {
+        logoutModal.classList.add("hidden");
     });
 });

@@ -1,7 +1,8 @@
-﻿using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
 using game_platform_rwa.Security;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +18,16 @@ namespace game_platform_rwa.Controllers
         private readonly IConfiguration config;
         private readonly GamePlatformRwaContext context;
         private readonly LogService logService;
+        private readonly IMapper _mapper;
+
         private readonly String? secureKey;
-        public UserController(IConfiguration configuration, GamePlatformRwaContext context, LogService logService)
+        public UserController(IConfiguration configuration, GamePlatformRwaContext context, LogService logService, IMapper mapper)
         {
             config = configuration;
             secureKey = config["JWT:SecureKey"];
             this.context = context;
             this.logService = logService;
+            this._mapper = mapper;
         }
 
         //  https://jwt.io/  -> Token info
@@ -37,8 +41,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                // The same secure key must be used here to create JWT,
-                // as the one that is used by middleware to verify JWT
+
                 if (string.IsNullOrEmpty(secureKey))
                     return BadRequest("Something went wrong....");
 
@@ -57,22 +60,11 @@ namespace game_platform_rwa.Controllers
         {
             try
             {
-                var users = context.Users
-                    .Include(u => u.Role)
-                    .Select(u => new AdminUserDto
-                    {
-                        Id = u.Id,
-                        Username = u.Username,
-                        Email = u.Email,
-                        FirstName = u.FirstName,
-                        LastName = u.LastName,
-                        Phone = u.Phone,
-                        RoleId = u.RoleId
-                    })
-                    .ToList();
+                var users = context.Users.Include(u => u.Role);
+                var mappedResult = _mapper.Map<IEnumerable<AdminUserDto>>(users);
 
                 logService.Log($"Successfully obtained all users! User count: {users.Count()}", "Success");
-                return Ok(users);
+                return Ok(mappedResult);
             }
             catch (Exception ex)
             {
@@ -94,19 +86,11 @@ namespace game_platform_rwa.Controllers
                 if (user == null)
                     return NotFound("User not found.");
 
-                var result = new AdminUserDto
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Phone = user.Phone,
-                    RoleId = user.RoleId
-                };
+                var mappedResult = _mapper.Map<AdminUserDto>(user);
 
-                logService.Log($"Successfully obtained with ID {result.Id}, username: {result.Username}!", "Success");
-                return Ok(result);
+
+                logService.Log($"Successfully obtained with ID {mappedResult.Id}, username: {mappedResult.Username}!", "Success");
+                return Ok(mappedResult);
             }
             catch (Exception ex)
             {
@@ -132,32 +116,12 @@ namespace game_platform_rwa.Controllers
                 }
 
                 // Update editable fields
-                user.Username = dto.Username;
-                user.Email = dto.Email;
-                user.FirstName = dto.FirstName;
-                user.LastName = dto.LastName;
-                user.Phone = dto.Phone;
-
-                if (dto.ConfirmPassword != dto.ConfirmPassword)
-                {
-                    logService.Log($"Updated user with ID={id} failed! Passwords do not match!", "Error");
-                    return StatusCode(400, "Passwords do not match!");
-                }
-
-                // Optional password update
-                if (!string.IsNullOrWhiteSpace(dto.NewPassword))
-                {
-                    var newSalt = PasswordHashProvider.GetSalt();
-                    var newHash = PasswordHashProvider.GetHash(dto.NewPassword, newSalt);
-
-                    user.PwdSalt = newSalt;
-                    user.PwdHash = newHash;
-                }
+                _mapper.Map(dto, user);
 
                 await context.SaveChangesAsync();
 
                 logService.Log($"Updated user info for user ID={id}", "Success");
-                return Ok("User updated successfully");
+                return Ok(new { message = "Information updated successfully! Good work!" });
             }
             catch (Exception ex)
             {
@@ -189,20 +153,10 @@ namespace game_platform_rwa.Controllers
                 // Hash the password
                 var b64salt = PasswordHashProvider.GetSalt();
                 var b64hash = PasswordHashProvider.GetHash(userDto.Password, b64salt);
-
-                // Create user from DTO and hashed password
-                var user = new User
-                {
-                    Id = userDto.Id,
-                    Username = userDto.Username,
-                    PwdHash = b64hash,
-                    PwdSalt = b64salt,
-                    FirstName = userDto.FirstName,
-                    LastName = userDto.LastName,
-                    Email = userDto.Email,
-                    Phone = userDto.Phone,
-                    RoleId = 2, // Default role for new users
-                };
+                var user = _mapper.Map<User>(userDto);
+                user.PwdHash = b64hash;
+                user.PwdSalt = b64salt;
+                user.RoleId = 2; // Default role for new users
 
                 // Add user and save changes to database
                 context.Add(user);
@@ -268,7 +222,12 @@ namespace game_platform_rwa.Controllers
                     );
 
                 logService.Log($"Login successufuly. User: {userDto.Username}.", "Success");
-                return Ok(serializedToken);
+                return Ok(new
+                {
+                    token = serializedToken,
+                    role = role
+                });
+
             }
             catch (Exception ex)
             {
@@ -279,7 +238,7 @@ namespace game_platform_rwa.Controllers
 
         [HttpPost("[action]")]
         [Authorize] // Only logged-in users can change password
-        public IActionResult ChangePassword([FromBody] ChangePasswordDto dto)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -288,10 +247,7 @@ namespace game_platform_rwa.Controllers
             
             try
             {
-                var identity = HttpContext.User.Identity as ClaimsIdentity;
-                var username = identity?.FindFirst(ClaimTypes.Name)?.Value;
-                
-                var user = context.Users.FirstOrDefault(u => u.Username == username);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id == dto.Id);
                 if (user == null)
                 {
                     logService.Log("User not found to change the password.", "Error");

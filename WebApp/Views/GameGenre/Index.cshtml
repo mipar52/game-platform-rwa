@@ -1,4 +1,4 @@
-﻿@model List<WebApp.ViewModels.GameGenreViewModel>
+﻿@model List<GamePlatformBL.ViewModels.GameGenreViewModel>
 @{
     ViewData["Title"] = "Genres";
 }
@@ -11,8 +11,8 @@
         <div class="col-md-4 mb-4">
             <div class="card bg-dark text-light border-danger shadow">
                 <div class="card-body text-center">
-                    <h5 class="card-title">@genre.Name</h5>
-                    <a asp-controller="Game" asp-action="Index" asp-route-genreId="@genre.Id" class="btn btn-danger mt-2">
+                    <h5 class="card-title">@genre.Genre.Name</h5>
+                    <a asp-controller="Game" asp-action="Index" asp-route-genreId="@genre.Genre.Id" class="btn btn-danger mt-2">
                         Browse Games
                     </a>
                 </div>

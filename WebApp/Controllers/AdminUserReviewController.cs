@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using WebApp.Services;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
-using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
+
     public class AdminUserReviewController : Controller
     {
         private readonly ApiService _apiService;
@@ -39,7 +42,7 @@ namespace WebApp.Controllers
                 return RedirectToAction("Index");
             } else
             {
-                DebugHelper.PrintDebugMessage($"ToggleApproval Response: {response.StatusCode}");
+                DebugHelper.AppPrintDebugMessage($"ToggleApproval Response: {response.StatusCode}");
                 TempData["Error"] = "Failed to toggle approval.";
                 return RedirectToAction("Index");
             }

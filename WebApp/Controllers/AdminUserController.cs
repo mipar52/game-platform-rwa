@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApp.Services;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminUserController : Controller
     {
 

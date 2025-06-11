@@ -13,5 +13,9 @@ dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connecti
         <script src="~/js/loginLogic.js"></script>
     }
 
-    - AJAX requestovi
-    - AutoMapper
+    - AJAX requestovi - DONE
+    - AutoMapper - DONE
+
+    - TODO 11.06.2025:
+    - handle err messages properly
+    - check task doc to see if anyhting else is missing

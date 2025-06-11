@@ -1,13 +1,23 @@
-﻿@model List<WebApp.ViewModels.AdminGameViewModel>
+﻿@model List<GamePlatformBL.ViewModels.AdminGameViewModel>
 @{
     ViewData["Title"] = "Manage Games";
 }
 
 <h2 class="text-danger mb-4">Admin - Manage Games</h2>
+@if (!Model.Any())
+{
+    <p>There are no games yet.</p>
+}
+
 
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
 
 <a asp-action="Create" class="btn btn-success mb-3">Create New Game</a>
@@ -27,7 +37,7 @@
             <tr>
                 <td>@game.Name</td>
                 <td>@game.GameType.Name</td>
-                <td>@string.Join(", ", game.Genres.Select(x => x.Name))</td>
+                <td>@string.Join(", ", game.GameGenres.Select(x => x.Genre.Name))</td>
                 <td>
                     <a asp-action="Update" asp-route-id="@game.Id" class="btn btn-warning btn-sm">Update</a>
                     <form asp-action="Delete" asp-route-id="@game.Id" method="post" class="d-inline"

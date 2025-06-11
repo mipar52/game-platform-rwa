@@ -1,13 +1,12 @@
 ﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
-    var isLoggedIn = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") != null;
-    var jwtToken = HttpContextAccessor.HttpContext?.Session.GetString("JwtToken");
-    var username = HttpContextAccessor.HttpContext?.Session.GetString("Username");
-    var role = HttpContextAccessor.HttpContext?.Session.GetString("Role");
+    var user = HttpContextAccessor.HttpContext?.User;
+    var isLoggedIn = user?.Identity?.IsAuthenticated ?? false;
+    var username = user?.Identity?.Name;
+    var role = user?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
     var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
     var isLoginPage = currentPath.Contains("/login");
-
     @Html.AntiForgeryToken()
 }
 
@@ -25,17 +24,10 @@
     <script>
         console.log('current root: ' + window.location.origin);
     </script>
-    @if (!string.IsNullOrEmpty(jwtToken))
-    {
-        <script>
-            console.log(window.location.origin);
-            localStorage.setItem("jwtToken", "@jwtToken");
-            sessionStorage.setItem("JwtToken", "@jwtToken");
-        </script>
-    }
-    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
     <script src="~/js/logout.js" asp-append-version="true"></script>
-    <script src="~/js/loginLogic.js" asp-append-version="true"></script>
 
 
 </head>
@@ -49,24 +41,35 @@
                     <div class="container">
                         <a class="navbar-brand" asp-controller="Home" asp-action="Index">Game Platform RWA</a>
                         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span class="navbar-toggler-icon"></span>
                         </button>
 
-                        <div class="collapse navbar-collapse" id="navbarContent">
-                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
+                            <!-- LEFT SIDE: Logo + Main Navigation -->
+                            <ul class="navbar-nav mb-2 mb-lg-0">
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
+                                    <a class="nav-link text-danger fw-bold" asp-controller="GameType" asp-action="Index">Search Games</a>
                                 </li>
-                                <li class="nav-item" id="admin-panel-link" style="display: none;">
-                                    <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="GameList" asp-action="All">View All Games</a>
                                 </li>
                             </ul>
 
-                            <ul class="navbar-nav ms-auto align-items-center">
+                            <!-- RIGHT SIDE: Account + Admin + Greeting + Logout -->
+                            <ul class="navbar-nav align-items-center">
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Account" asp-action="Index">Account</a>
+                                </li>
+                                @if (role == "Admin")
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-danger fw-bold" href="/Admin">Admin Panel</a>
+                                    </li>
+                                }
                                 <li class="nav-item">
                                     <span class="user-greeting me-2 text-light" style="font-family: 'Orbitron'; font-weight: 500;">
                                         Hello, @username!
@@ -81,20 +84,13 @@
                         </div>
                     </div>
                 </nav>
+
             }
         </header>
 
         <div class="container">
             <main role="main" class="flex">
                 <div class="container">
-                    @if (TempData["SuccessMessage"] != null)
-                    {
-                        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                            @TempData["SuccessMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
-
                     @RenderBody()
                 </div>
             </main>
@@ -105,20 +101,17 @@
             </div>
         </footer>
     </div> 
-
+    <div id="logoutModal" class="logout-modal hidden">
+        <div class="logout-modal-content">
+            <h2>⚔️ Don't go :(</h2>
+            <p>Are you sure you want to leave the arena?</p>
+            <button id="confirmLogout" class="btn btn-danger">Yes, log me out</button>
+            <button id="cancelLogout" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
 
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-
-    <script>
-        window.addEventListener('storage', function (event) {
-            if (event.key === "logout") {
-                console.log("Detected logout in another tab. Redirecting to login...");
-                window.location.href = "/Login";
-            }
-        });
-    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

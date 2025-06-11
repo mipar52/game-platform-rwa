@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApp.Services;
-using WebApp.Utilities;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.Utilities;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using GamePlatformBL.DTOs;
 
 namespace WebApp.Controllers
 {
+    [Authorize]
     public class AccountController : Controller
     {
         private readonly ApiService _apiService;
@@ -16,6 +19,7 @@ namespace WebApp.Controllers
 
         public IActionResult Index()
         {
+            //ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
@@ -31,7 +35,7 @@ namespace WebApp.Controllers
             }
 
             var user = await _apiService.GetAsync<EditUserViewModel>($"User/GetUserById?id={userInfo.Id}");
-            DebugHelper.PrintDebugMessage($"Got the user with ID: {user.Id}");
+            DebugHelper.AppPrintDebugMessage($"Got the user with ID: {user.Id}");
             if (user == null)
             {
                 TempData["Error"] = "User not found.";
@@ -43,28 +47,55 @@ namespace WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Manage(EditUserViewModel model)
+        public async Task<IActionResult> Manage([FromBody] EditUserViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
+            {
+                DebugHelper.AppPrintDebugMessage($"User new info model state: {ModelState}");
+                return BadRequest(ModelState);
+            }
+                
 
+            DebugHelper.AppPrintDebugMessage($"User new info: {model}");
             var result = await _apiService.PutWithResponseAsync($"User/Update/{model.Id}", model);
 
             if (result.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Your account has been updated.";
-
                 var updatedUser = await _apiService.GetAsync<EditUserViewModel>($"User/GetUserById?id={model.Id}");
-
                 if (updatedUser != null)
                     HttpContext.Session.SetString("Username", updatedUser.Username);
 
-                return RedirectToAction("Index");
+                return Ok(new { message = "Updated successfully" });
             }
 
-            ModelState.AddModelError("", "Update failed. Please try again.");
-            return View(model);
+            return BadRequest(new { error = "Update failed." });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                DebugHelper.AppPrintDebugMessage($"Change password model state: {ModelState}");
+                return BadRequest("Invalid model.");
+            }
+                
+
+            DebugHelper.AppPrintDebugMessage($"Current: {model.CurrentPassword}, new: {model.NewPassword}");
+            if (model.NewPassword != model.CurrentPassword)
+                return BadRequest("Passwords do not match.");
+
+            var response = await _apiService.PostAsync("User/ChangePassword", model);
+
+            if (response.IsSuccessStatusCode)
+                return Ok("Password updated successfully.");
+
+            var errorMsg = await response.Content.ReadAsStringAsync();
+            return BadRequest(errorMsg);
+        }
+
+
 
         public async Task<IActionResult> Reviews()
         {
@@ -77,10 +108,10 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteReview(int id, int userId)
+        public async Task<IActionResult> DeleteReview(int gameId, int userId, int id)
         {
-            var response = await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={id}&userId={userId}");
-
+            var response = await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={gameId}&userId={userId}&id={id}");
+            DebugHelper.AppPrintDebugMessage($"Review delete status: {response.StatusCode}");
             if (response.IsSuccessStatusCode)
             {
                 TempData["SuccessMessage"] = "Review deleted successfully.";

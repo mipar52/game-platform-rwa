@@ -86,4 +86,36 @@ main {
     flex: 1
 }
 
+.logout-modal {
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .logout-modal.hidden {
+        display: none;
+    }
+
+.logout-modal-content {
+    background-color: #1e1e2f;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    color: #fff;
+    border: 2px solid #ff4d4d;
+    box-shadow: 0 0 15px #ff4d4d;
+    font-family: 'Orbitron', sans-serif;
+}
+
+    .logout-modal-content h2 {
+        margin-bottom: 15px;
+        color: #ff4d4d;
+    }
 

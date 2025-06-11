@@ -1,7 +1,8 @@
-﻿using game_platform_rwa.DTO_generator;
-using game_platform_rwa.DTOs;
-using game_platform_rwa.Logger;
-using game_platform_rwa.Models;
+﻿using AutoMapper;
+using GamePlatformBL.DTOs;
+using GamePlatformBL.Logger;
+using GamePlatformBL.Models;
+using GamePlatformBL.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +17,16 @@ namespace game_platform_rwa.Controllers
 
         private readonly GamePlatformRwaContext context;
         private readonly LogService logService;
-
-        public GameController(GamePlatformRwaContext context, LogService logService) 
+        private readonly IMapper _mapper;
+        public GameController(GamePlatformRwaContext context, LogService logService, IMapper mapper) 
         {
             this.context = context;
             this.logService = logService;
+            this._mapper = mapper;
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<GameDto>> GetAllGames()
+        public ActionResult<IEnumerable<SimpleGameDto>> GetAllGames()
         {
             if (!ModelState.IsValid)
             {
@@ -35,10 +37,10 @@ namespace game_platform_rwa.Controllers
             {
                 var result = context.Games
                     .Include(g => g.GameType)
-                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                    .Include(g => g.Reviews);
-
-                var mappedResult = result.Select(x => GameDTOGenerator.generateGameDto(x));
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
+                //  .Include(g => g.Reviews);
+                
+                var mappedResult = _mapper.Map<IEnumerable<SimpleGameDto>>(result);
 
                 if (!mappedResult.Any()) 
                 {
@@ -51,10 +53,66 @@ namespace game_platform_rwa.Controllers
             }
             catch (Exception ex)
             {
+                DebugHelper.ApiPrintDebugMessage("Error mapping games: " + ex.Message);
                 logService.Log($"Failed to get all games. Error: {ex.Message}", "Error");
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("GetPagedGames")]
+        public async Task<ActionResult<IEnumerable<SimpleGameDto>>> GetPagedGames(int page = 1, int pageSize = 6)
+        {
+            if (page <= 0 || pageSize <= 0)
+                return BadRequest("Page and pageSize must be greater than 0.");
+
+            try
+            {
+
+                var query = context.Games
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .OrderBy(g => g.Name);
+
+                var totalCount = await query.CountAsync();
+
+                var games = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var mapped = _mapper.Map<List<SimpleGameDto>>(games);
+
+                return Ok(new PagedResult<SimpleGameDto>
+                {
+                    Items = mapped,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Failed to get paged games. Error: {ex.Message}", "Error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("Search")]
+        public async Task<IActionResult> Search(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest("Query is required");
+
+            var results = await context.Games
+                .Where(g => g.Name.Contains(query))
+                .Select(g => new { g.Id, g.Name })
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
+
 
         [HttpGet("[action]")]
         public ActionResult<GameDto> GetGameById(int id)
@@ -78,7 +136,7 @@ namespace game_platform_rwa.Controllers
                     return NotFound($"Could not find game with ID {id}");
                 }
 
-                var mappedResult = GameDTOGenerator.generateGameDto(result);
+                var mappedResult = _mapper.Map<GameDto>(result);
 
                 logService.Log($"Game '{mappedResult.Name}' with id={id} found.");
                 return Ok(mappedResult);
@@ -91,8 +149,8 @@ namespace game_platform_rwa.Controllers
         }
         
          
-                 [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Game>> GetGamesWithName(string name)
+        [HttpGet("[action]")]
+        public ActionResult<IEnumerable<GameDto>> GetGamesWithName(string name)
         {
             if (!ModelState.IsValid)
             {
@@ -110,9 +168,9 @@ namespace game_platform_rwa.Controllers
                     return NotFound($"No games found containing '{name}' in the name.");
                 }
 
-                var result = matchingGames.Select(x => GameDTOGenerator.generateGameDto(x));
+                var mappedResult = _mapper.Map<IEnumerable<GameDto>>(matchingGames);
                 logService.Log($"Found '{matchingGames.Count}' games with name={name}.");
-                return Ok(result);
+                return Ok(mappedResult);
             }
             catch (Exception ex)
             {
@@ -122,7 +180,7 @@ namespace game_platform_rwa.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<GameDto>> GetGamesByTypeAndGenres(int gameTypeId, [FromQuery] List<int> genreIds)
+        public ActionResult<IEnumerable<SimpleGameDto>> GetGamesByTypeAndGenres(int gameTypeId, [FromQuery] List<int> genreIds)
         {
             if (!ModelState.IsValid || genreIds == null || !genreIds.Any())
             {
@@ -142,9 +200,7 @@ namespace game_platform_rwa.Controllers
                 var games = context.Games
                     .Where(g => g.GameTypeId == gameTypeId && matchingGameIds.Contains(g.Id))
                     .Include(g => g.GameType)
-                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                    .Include(g => g.Reviews)
-                    .ToList();
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
 
                 if (!games.Any())
                 {
@@ -152,10 +208,11 @@ namespace game_platform_rwa.Controllers
                     return NotFound("No games matched the selected filters.");
                 }
 
-                var result = games.Select(g => GameDTOGenerator.generateGameDto(g)).ToList();
-                logService.Log($"Found {result.Count} games for GameTypeId={gameTypeId} and Genres={string.Join(",", genreIds)}.", "Success");
+                var mappedResult = _mapper.Map<IEnumerable<SimpleGameDto>>(games);
 
-                return Ok(result);
+                logService.Log($"Found {mappedResult.Count()} games for GameTypeId={gameTypeId} and Genres={string.Join(",", genreIds)}.", "Success");
+
+                return Ok(mappedResult);
             }
             catch (Exception ex)
             {
@@ -164,8 +221,52 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [HttpGet("[action]")]
+        public async Task<ActionResult<PagedResult<SimpleGameDto>>> GetGamesByTypeAndGenresPaged(
+    int gameTypeId, [FromQuery] List<int> genreIds, int page = 1, int pageSize = 6)
+        {
+            if (!genreIds.Any() || page <= 0 || pageSize <= 0)
+                return BadRequest("Genres, page, and pageSize must be valid.");
 
+            try
+            {
+                var matchingGameIds = await context.GameGenres
+                    .Where(gg => genreIds.Contains(gg.GenreId))
+                    .Select(gg => gg.GameId)
+                    .Distinct()
+                    .ToListAsync();
 
+                var query = context.Games
+                    .Where(g => g.GameTypeId == gameTypeId && matchingGameIds.Contains(g.Id))
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
+
+                var totalCount = await query.CountAsync();
+
+                var pagedGames = await query
+                    .OrderBy(g => g.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var mapped = _mapper.Map<List<SimpleGameDto>>(pagedGames);
+
+                return Ok(new PagedResult<SimpleGameDto>
+                {
+                    Items = mapped,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                logService.Log($"Error getting paged games by type and genres: {ex.Message}", "Error");
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost("[action]")]
         public ActionResult<GameCreateDto> CreateGame([FromBody] GameCreateDto game)
         {
@@ -176,19 +277,13 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var newGame = new Game
+                var trimmedName = game.Name.Trim();
+                if (context.Games.Any(x => x.Name.Equals(trimmedName)))
                 {
-                    Name = game.Name,
-                    Description = game.Description,
-                    ReleaseDate = game.ReleaseDate,
-                    GameUrl = game.GameUrl,
-                    GameTypeId = game.GameTypeId,
-                    MetacriticScore = (int)game.MetaCriticScore,
-                    WonGameOfTheYear = game.GameOfTheYearAward,
-                    ImageUrl = game.ImageUrl,
-                    ImagePath = game.ImagePath
-                };
-
+                    logService.Log($"Game with name {trimmedName} already exists", "Error");
+                    return BadRequest($"Game with name {trimmedName} already exists");
+                }
+                var newGame = _mapper.Map<Game>(game);
 
                 foreach (var genre in game.GenreIds)
                 {
@@ -221,6 +316,7 @@ namespace game_platform_rwa.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("[action]")]
         public ActionResult<GameCreateDto> UpdateGame(int id, [FromBody] GameCreateDto game)
         {
@@ -228,28 +324,39 @@ namespace game_platform_rwa.Controllers
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
-                var existing = context.Games.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
-                if (existing == null) return NotFound($"Game ID {id} not found");
+                var existing = context.Games
+                    .Include(g => g.GameGenres)
+                    .FirstOrDefault(g => g.Id == id);
 
-                existing.Name = game.Name;
-                existing.Description = game.Description;
-                existing.ReleaseDate = game.ReleaseDate;
-                existing.GameUrl = game.GameUrl;
-                existing.GameTypeId = game.GameTypeId;
-                existing.ImagePath  = game.ImagePath;
-                existing.ImageUrl = game.ImageUrl;
+                if (existing == null)
+                    return NotFound($"Game ID {id} not found");
 
-                // Update genres
+                // Map scalar properties only
+                _mapper.Map(game, existing);
+
+                // Update GameGenres safely
+                // 1. Remove all existing
                 context.GameGenres.RemoveRange(existing.GameGenres);
-                foreach (var genre in game.GenreIds)
+
+                // 2. Add new, avoiding nulls
+                foreach (var genreId in game.GenreIds.Distinct())
                 {
-                    context.GameGenres.Add(new GameGenre { GameId = id, GenreId = context.Genres.FirstOrDefault(g => g.Id == genre)?.Id ?? 0 });
+                    if (context.Genres.Any(g => g.Id == genreId)) // Validate genre exists
+                    {
+                        context.GameGenres.Add(new GameGenre
+                        {
+                            GameId = id,
+                            GenreId = genreId
+                        });
+                    }
                 }
-                logService.Log($"Game '{existing.Name}' with id={existing.Id} updated.");
 
                 context.SaveChanges();
+
+                logService.Log($"Game '{existing.Name}' with id={existing.Id} updated.");
                 return Ok(existing);
             }
             catch (Exception ex)
@@ -259,7 +366,7 @@ namespace game_platform_rwa.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")] // only Admins can delete games
+        [Authorize(Roles = "Admin")]
         [HttpDelete("[action]")]
         public IActionResult DeleteGame(int id)
         {

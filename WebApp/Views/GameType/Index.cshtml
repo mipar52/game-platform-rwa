@@ -1,16 +1,20 @@
-﻿@model WebApp.ViewModels.GameTypeGenreSelectionViewModel
-
+﻿@model GamePlatformBL.ViewModels.GameTypeGenreSelectionViewModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @{
     ViewData["Title"] = "Game Categories";
+    var token = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken")?.Value;
 }
-
-<link rel="stylesheet" href="~/css/game-categories.css" />
+<link rel="stylesheet" href="~/css/game-categories.css" asp-append-version="true"/>
 
 <div class="game-category-wrapper">
     <h1 class="neon-header">Choose Your Adventure</h1>
 
-    <form asp-controller="GameList" asp-action="Index" method="post" class="category-form">
+    <div class="mb-4 position-relative">
+        <input type="text" id="gameSearchInput" class="form-control" placeholder="Search games..." autocomplete="off" />
+        <ul id="searchResultsDropdown" class="list-group position-absolute w-100" style="z-index: 999; display: none;"></ul>
+    </div>
 
+    <form asp-controller="GameList" asp-action="Index" method="post" class="category-form">
         <label asp-for="SelectedGameTypeId" class="form-label">Select Game Type</label>
         <select asp-for="SelectedGameTypeId"
                 asp-items="@(new SelectList(Model.GameTypes, "Id", "Name"))"
@@ -18,7 +22,7 @@
 
         <h3 class="text-white">Select Your Genres</h3>
         <div class="genre-grid mt-3">
-            @foreach (var genre in Model.GameGenres)
+            @foreach (var genre in Model.Genres)
             {
                 <input type="checkbox"
                        name="SelectedGenreIds"
@@ -36,3 +40,56 @@
         <button type="submit" class="btn browse-btn mt-4">Browse Games</button>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const searchInput = $("#gameSearchInput");
+            const dropdown = $("#searchResultsDropdown");
+
+            searchInput.on("input", function () {
+                const query = $(this).val();
+
+                if (query.length < 2) {
+                    dropdown.hide().empty();
+                    return;
+                }
+
+                $.ajax({
+                    url: `http://localhost:5062/api/Game/Search?query=${encodeURIComponent(query)}`,
+                    method: "GET",
+                    headers: {
+                       "Authorization": "Bearer @token"
+                    },
+                    success: function (games) {
+                        dropdown.empty();
+                        if (games.length === 0) {
+                            dropdown.hide();
+                            return;
+                        }
+
+                        games.forEach(game => {
+                            dropdown.append(`<li class="list-group-item list-group-item-action" data-id="${game.id}">${game.name}</li>`);
+                        });
+
+                        dropdown.show();
+                    },
+                    error: function () {
+                        dropdown.hide().empty();
+                    }
+                });
+            });
+
+            dropdown.on("click", "li", function () {
+                const gameId = $(this).data("id");
+                window.location.href = `/GameDetails/Index/${gameId}`;
+            });
+
+            $(document).click(function (e) {
+                if (!$(e.target).closest("#gameSearchInput, #searchResultsDropdown").length) {
+                    dropdown.hide();
+                }
+            });
+        });
+    </script>
+}

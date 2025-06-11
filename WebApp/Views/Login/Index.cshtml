@@ -1,4 +1,4 @@
-﻿@model WebApp.ViewModels.LoginUserViewModel
+﻿@model GamePlatformBL.ViewModels.LoginUserViewModel
 @{
     ViewData["Title"] = "Login";
 }
@@ -7,7 +7,14 @@
     <div class="login-container">
         <div class="login-box">
             <div class="neon-text">Welcome Summoner</div>
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger text-center mt-3">
+                @TempData["Error"]
+            </div>
+        }
             <form asp-action="Index" method="post">
+            <input asp-for="ReturnUrl" type="hidden" />
                 <div class="form-group">
                     <label asp-for="Username"></label>
                     <input asp-for="Username" class="form-control" />
@@ -22,6 +29,12 @@
 
                 <button type="submit" class="btn login-btn mt-4">Login</button>
             </form>
+        <div id="loginSpinner" class="text-center mt-4" style="display:none;">
+            <div class="spinner-border text-warning" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2 text-light">Logging in...</div>
+        </div>
         <p class="text-center mt-3">
             Don't have an account?
             <a asp-action="Register" asp-controller="Login" class="text-info fw-bold">
@@ -31,5 +44,17 @@
         </div>
     </div>
 
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const spinner = document.getElementById("loginSpinner");
 
+            form.addEventListener("submit", function () {
+                spinner.style.display = "block";
+                form.querySelector("button[type='submit']").disabled = true;
+            });
+        });
+    </script>
+}
 

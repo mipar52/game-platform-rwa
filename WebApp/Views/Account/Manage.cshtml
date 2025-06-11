@@ -1,59 +1,135 @@
-﻿@model WebApp.ViewModels.EditUserViewModel
+﻿@model GamePlatformBL.ViewModels.EditUserViewModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
     ViewData["Title"] = "Edit Account Information";
+    var token = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken")?.Value;
+}
 }
 
 <h2 class="text-danger">Edit Account Information</h2>
 
-<form asp-action="Manage" method="post">
-    <input type="hidden" name="_method" value="PUT" />
-    <input type="hidden" asp-for="Id" />
-
+<form id="accountForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="Id" value="@Model.Id" />
     <div class="form-group mb-3">
         <label asp-for="Username"></label>
-        <input asp-for="Username" class="form-control" />
-        <span asp-validation-for="Username" class="text-danger"></span>
+        <input id="Username" value="@Model.Username" class="form-control" />
     </div>
     <div class="form-group mb-3">
         <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+        <input id="Email" value="@Model.Email" class="form-control" />
     </div>
     <div class="form-group mb-3">
         <label asp-for="FirstName"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
+        <input id="FirstName" value="@Model.FirstName" class="form-control" />
     </div>
     <div class="form-group mb-3">
         <label asp-for="LastName"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
+        <input id="LastName" value="@Model.LastName" class="form-control" />
     </div>
     <div class="form-group mb-3">
         <label asp-for="Phone"></label>
-        <input asp-for="Phone" class="form-control" />
-        <span asp-validation-for="Phone" class="text-danger"></span>
+        <input id="Phone" value="@Model.Phone" class="form-control" />
     </div>
-
-    <hr />
-    <h5>Change Password</h5>
-    <div class="form-group mb-3">
-        <label asp-for="NewPassword"></label>
-        <input asp-for="NewPassword" type="password" class="form-control" />
-        <span asp-validation-for="NewPassword" class="text-danger"></span>
-    </div>
-    <div class="form-group mb-3">
-        <label asp-for="ConfirmPassword"></label>
-        <input asp-for="ConfirmPassword" type="password" class="form-control" />
-        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-    </div>
-
     <button type="submit" class="btn btn-danger">Save Changes</button>
+    <div id="editUserResult" class="mt-2"></div>
 </form>
+
+
+<hr />
+
+<h5>Change Password</h5>
+<form id="changePasswordForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="UserPasswordId" value="@Model.Id" />
+
+    <div class="form-group mb-3">
+        <label for="CurrentPassword">Current Password</label>
+        <input type="password" id="CurrentPassword" class="form-control" required />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="NewPassword">New Password</label>
+        <input type="password" id="NewPassword" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-warning">Change Password</button>
+    <div id="passwordChangeResult" class="mt-2"></div>
+</form>
+
+
+
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            $("#accountForm").submit(function (e) {
+                e.preventDefault();
+                const id = $("#Id").val();
+                const userData = {
+                    Id: $("#Id").val(),
+                    Username: $("#Username").val(),
+                    Email: $("#Email").val(),
+                    FirstName: $("#FirstName").val(),
+                    LastName: $("#LastName").val(),
+                    Phone: $("#Phone").val()
+                };
+                const editUrl = `http://localhost:5062/api/User/Update/${id}`;
+                console.log(editUrl);
+                $.ajax({
+                    url: editUrl,
+                    method: "PUT",
+                    contentType: "application/json",
+                    data: JSON.stringify(userData),
+                    headers: {
+                       "Authorization": "Bearer @token"
+                    },
+                    success: function (res) {
+                        $("#editUserResult").html(`<div class="alert alert-success">${res.message}</div>`);
+                    },
+                    error: function (xhr) {
+                        $("#editUserResult").html(`<div class="alert alert-danger">Update failed.</div>`);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            $("#changePasswordForm").submit(function (e) {
+                e.preventDefault();
+
+                const payload = {
+                    Id: $("#UserPasswordId").val(),
+                    CurrentPassword: $("#CurrentPassword").val(),
+                    NewPassword: $("#NewPassword").val()
+                };
+                const changePassUrl = "http://localhost:5062/api/User/ChangePassword";
+                $.ajax({
+                    url: changePassUrl,
+                    method: "POST",
+                    contentType: "application/json",
+                    headers: {
+                       "Authorization": "Bearer @token"
+                    },
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        $("#passwordChangeResult").html(`<div class="alert alert-success">Password updated successfully.</div>`);
+                        $("#changePasswordForm")[0].reset();
+                    },
+                    error: function (xhr) {
+                        let msg = xhr.responseText || "Password change failed.";
+                        $("#passwordChangeResult").html(`<div class="alert alert-danger">${msg}</div>`);
+                    }
+                });
+            });
+        });
+    </script>
+
 }

@@ -1,30 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Text;
-using System.Text.Json;
-using WebApp.Services;
-using WebApp.ViewModels;
+﻿using WebApp.Services;
+using GamePlatformBL.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using GamePlatformBL.DTOs;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminGameController : Controller
     {
         private readonly ApiService _apiService;
-
-        public AdminGameController(ApiService apiService)
+        private readonly IMapper _mapper;
+        public AdminGameController(ApiService apiService, IMapper mapper)
         {
             _apiService = apiService;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index()
         {
-            var games = await _apiService.GetAsync<List<AdminGameViewModel>>("Game/GetAllGames");
-            return View(games);
+            var games = await _apiService.GetAsync<List<SimpleGameDto>>("Game/GetAllGames");
+            var result = _mapper.Map<List<AdminGameViewModel>>(games);
+            return View(result);
         }
 
         public async Task<IActionResult> Create()
         {
-            ViewBag.GameTypes = await _apiService.GetAsync<List<GameTypeViewModel>>("GameType/GetAllGameTypes");
-            ViewBag.Genres = await _apiService.GetAsync<List<GameGenreViewModel>>("GameGenre/GetAllGenres");
+            ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+            ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
 
             var viewModel = new AdminGameViewModel();
             return View(viewModel);
@@ -36,10 +40,10 @@ namespace WebApp.Controllers
             if (!ModelState.IsValid)
             {
 
-                ViewBag.GameTypes = await _apiService.GetAsync<List<GameTypeViewModel>>("GameType/GetAllGameTypes");
-                ViewBag.Genres = await _apiService.GetAsync<List<GameGenreViewModel>>("GameGenre/GetAllGenres");
+                ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+                ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
                 model.GameTypeId = model.GameType.Id;
-                model.genreIds = model.Genres.Select(x => x.Id);
+                model.genreIds = model.GameGenres.Select(x => x.Genre.Id);
                 return View(model);
             }
 
@@ -62,8 +66,8 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            ViewBag.GameTypes = await _apiService.GetAsync<List<GameTypeViewModel>>("GameType/GetAllGameTypes");
-            ViewBag.Genres = await _apiService.GetAsync<List<GameGenreViewModel>>("GameGenre/GetAllGenres");
+            ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+            ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
             return View("Create", game);
         }
 
@@ -72,14 +76,15 @@ namespace WebApp.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.GameTypes = await _apiService.GetAsync<List<GameTypeViewModel>>("GameType/GetAll");
-                ViewBag.Genres = await _apiService.GetAsync<List<GameGenreViewModel>>("Genre/GetAll");
+
+                ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+                ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
 
                 return View(model);
             }
 
             model.GameTypeId = model.GameType.Id;
-            model.genreIds = model.Genres.Select(x => x.Id);
+            model.genreIds = model.GameGenres.Select(x => x.Genre.Id);
             var response = await _apiService.PostAsync($"Game/UpdateGame?id={model.Id}", model);
             if (response.IsSuccessStatusCode)
             {
@@ -95,7 +100,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Save(AdminGameViewModel model, int SelectedGameTypeId, List<int> SelectedGenreIds)
         {
             model.GameType = new GameTypeViewModel { Id = SelectedGameTypeId };
-            model.Genres = SelectedGenreIds.Select(id => new GameGenreViewModel { Id = id }).ToList();
+         //   model.Genres = SelectedGenreIds.Select(id => new GameGenreViewModel { Genre.Id = id }).ToList(); 
             model.GameTypeId = SelectedGameTypeId;
             model.genreIds = SelectedGenreIds;
 
