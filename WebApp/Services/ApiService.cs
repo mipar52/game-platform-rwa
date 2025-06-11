@@ -26,15 +26,18 @@ namespace WebApp.Services
 
             private HttpClient CreateClient()
             {
-                var client = _httpClientFactory.CreateClient("ApiClient");
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+            var client = _httpClientFactory.CreateClient();
+
+
+            var token = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken");
+
             DebugHelper.AppPrintDebugMessage($"TOKEN: {token}");
-            if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
-                return client;
+            if (!string.IsNullOrEmpty(token.Value))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
             }
+            return client;
+        }
 
             public async Task<int> GetLogCountAsync()
             {
@@ -61,16 +64,7 @@ namespace WebApp.Services
 
             public async Task<T?> GetAsync<T>(string uri)
             {
-                var client = _httpClientFactory.CreateClient();
-
-
-            var token = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken");
-                
-                DebugHelper.AppPrintDebugMessage($"TOKEN: {token}");
-            if (!string.IsNullOrEmpty(token.Value))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
-                }
+                var client = CreateClient();
 
                 DebugHelper.AppPrintDebugMessage("[WebApp] - Getting the data from: " + _baseUrl + uri);
                 try
@@ -95,14 +89,9 @@ namespace WebApp.Services
 
             public async Task<HttpResponseMessage> PostAsync<T>(string uri, T data)
             {
-                var client = _httpClientFactory.CreateClient();
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
+            var client = CreateClient();
 
-                var json = JsonSerializer.Serialize(data);
+            var json = JsonSerializer.Serialize(data);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var fullUri = $"{_baseUrl}{uri}";
@@ -114,12 +103,7 @@ namespace WebApp.Services
 
             public async Task<HttpResponseMessage> PutWithResponseAsync<T>(string uri, T data)
             {
-                var client = _httpClientFactory.CreateClient();
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
+            var client = CreateClient();
 
                 var json = JsonSerializer.Serialize(data);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -132,13 +116,7 @@ namespace WebApp.Services
             }
             public async Task<HttpResponseMessage> DeleteAsync(string uri)
             {
-                var client = _httpClientFactory.CreateClient();
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
-
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
+            var client = CreateClient();
 
                 var fullUri = $"{_baseUrl}{uri}";
                 DebugHelper.AppPrintDebugMessage($"Sending DELETE to: {fullUri}");
