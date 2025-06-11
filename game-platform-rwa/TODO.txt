@@ -13,14 +13,9 @@ dotnet ef dbcontext scaffold "server=.;Database=GamePlatformRWA;Trusted_Connecti
         <script src="~/js/loginLogic.js"></script>
     }
 
-    - AJAX requestovi
-    - AutoMapper
+    - AJAX requestovi - DONE
+    - AutoMapper - DONE
 
-        <script>
-        window.addEventListener('storage', function (event) {
-            if (event.key === "logout") {
-                console.log("Detected logout in another tab. Redirecting to login...");
-                window.location.href = "/Login";
-            }
-        });
-    </script>
+    - TODO 11.06.2025:
+    - handle err messages properly
+    - check task doc to see if anyhting else is missing

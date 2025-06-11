@@ -4,6 +4,16 @@
     ViewData["Title"] = Model.Id == 0 ? "Create Game" : "Update Game";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
 <h2 class="text-danger">@ViewData["Title"]</h2>
 
 <form method="post" asp-action="Save">

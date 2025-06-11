@@ -1,8 +1,6 @@
 ﻿using WebApp.Services;
 using GamePlatformBL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using System.Text;
-using System.Text.Json;
 using GamePlatformBL.DTOs;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;

@@ -108,10 +108,10 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteReview(int id, int userId)
+        public async Task<IActionResult> DeleteReview(int gameId, int userId, int id)
         {
-            var response = await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={id}&userId={userId}");
-
+            var response = await _apiService.DeleteAsync($"GameReview/DeleteReview?gameId={gameId}&userId={userId}&id={id}");
+            DebugHelper.AppPrintDebugMessage($"Review delete status: {response.StatusCode}");
             if (response.IsSuccessStatusCode)
             {
                 TempData["SuccessMessage"] = "Review deleted successfully.";
