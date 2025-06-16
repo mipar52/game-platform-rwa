@@ -31,7 +31,7 @@ namespace WebApp.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             return View(new LoginUserViewModel
             {
-                ReturnUrl = returnUrl ?? string.Empty
+                ReturnUrl = returnUrl
             });
         }
 
@@ -44,7 +44,6 @@ namespace WebApp.Controllers
 
             var client = _clientFactory.CreateClient();
             var json = JsonSerializer.Serialize(loginModel, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower });
-            DebugHelper.AppPrintDebugMessage($"Login JSON: {json}");
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync("http://localhost:5062/api/User/Login", content);
@@ -60,14 +59,12 @@ namespace WebApp.Controllers
 
                 if (loginResponse != null)
                 {
-                    
-
                     var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, loginModel.Username),
-        new Claim(ClaimTypes.Role, loginResponse.Role),
-        new Claim("JwtToken", loginResponse.Token)
-    };
+                    {
+                        new Claim(ClaimTypes.Name, loginModel.Username),
+                        new Claim(ClaimTypes.Role, loginResponse.Role),
+                        new Claim("JwtToken", loginResponse.Token)
+                    };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var authProperties = new AuthenticationProperties { IsPersistent = true };
@@ -78,9 +75,17 @@ namespace WebApp.Controllers
                         authProperties
                     );
 
-                    return !string.IsNullOrEmpty(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl)
-                        ? LocalRedirect(loginModel.ReturnUrl)
-                        : RedirectToAction("Index", "Home");
+                    DebugHelper.AppPrintDebugMessage($"Local path: {loginModel.ReturnUrl}");
+                    if (!string.IsNullOrEmpty(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl))
+                    {
+                        return LocalRedirect(loginModel.ReturnUrl);
+                    }
+                    else if (loginResponse.Role == "Admin")
+                    {
+                        return RedirectToAction("Index", "Admin");
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
 
             }

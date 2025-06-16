@@ -32,7 +32,7 @@ namespace WebApp.Services
             var token = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken");
 
             DebugHelper.AppPrintDebugMessage($"TOKEN: {token}");
-            if (!string.IsNullOrEmpty(token.Value))
+            if (token != null && !string.IsNullOrEmpty(token.Value))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
             }
