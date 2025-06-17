@@ -12,7 +12,6 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddDbContext<GamePlatformRwaContext>(options => {
     options.UseSqlServer("name=ConnectionStrings:GamePlatformRWAString");
 });
