@@ -8,6 +8,11 @@
         <p>Looks like we do not have any games! Whoops!</p>
     } else {
         <h2 class="text-danger">All Games</h2>
+
+        <div class="text-center my-4">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-danger mx-2">Go back to Home page</a>
+        </div>
+
         <div id="gamesContainer">
             @await Html.PartialAsync("_GameCardsPartial", Model)
         </div>
@@ -32,7 +37,7 @@
                         alert("Failed to load games.");
                     },
                     complete: function () {
-                        $('#loadingSpinner').hide();   // Hide spinner
+                        $('#loadingSpinner').hide();
                     }
                 });
             }

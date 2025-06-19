@@ -44,6 +44,7 @@ namespace WebApp.Controllers
 
             var client = _clientFactory.CreateClient();
             var json = JsonSerializer.Serialize(loginModel, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower });
+            DebugHelper.AppPrintDebugMessage($"Login JSON: {json}");
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync("http://localhost:5062/api/User/Login", content);
@@ -59,12 +60,14 @@ namespace WebApp.Controllers
 
                 if (loginResponse != null)
                 {
+                    
+
                     var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, loginModel.Username),
-                        new Claim(ClaimTypes.Role, loginResponse.Role),
-                        new Claim("JwtToken", loginResponse.Token)
-                    };
+    {
+        new Claim(ClaimTypes.Name, loginModel.Username),
+        new Claim(ClaimTypes.Role, loginResponse.Role),
+        new Claim("JwtToken", loginResponse.Token)
+    };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var authProperties = new AuthenticationProperties { IsPersistent = true };
@@ -75,16 +78,15 @@ namespace WebApp.Controllers
                         authProperties
                     );
 
-                    DebugHelper.AppPrintDebugMessage($"Local path: {loginModel.ReturnUrl}");
-                    if (!string.IsNullOrEmpty(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl))
+                    if( !string.IsNullOrEmpty(loginModel.ReturnUrl) && Url.IsLocalUrl(loginModel.ReturnUrl))
                     {
                         return LocalRedirect(loginModel.ReturnUrl);
                     }
-                    else if (loginResponse.Role == "Admin")
+
+                    if (loginResponse.Role == "Admin")
                     {
                         return RedirectToAction("Index", "Admin");
                     }
-
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -114,10 +116,13 @@ namespace WebApp.Controllers
             {
                 TempData["SuccessMessage"] = "Registration successful! You can now log in.";
                 return RedirectToAction("Index");
+            } else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"Issue with registration! Reason: {errorMessage}";
+                return View(model);
             }
 
-            TempData["Error"] = $"Failed to save user. Reason: {response.StatusCode}";
-            return View(model);
         }
 
         [HttpPost]

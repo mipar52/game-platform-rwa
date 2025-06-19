@@ -5,7 +5,6 @@
     ViewData["Title"] = "Edit Account Information";
     var token = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == "JwtToken")?.Value;
 }
-}
 
 <h2 class="text-danger">Edit Account Information</h2>
 
@@ -92,7 +91,8 @@
                         $("#editUserResult").html(`<div class="alert alert-success">${res.message}</div>`);
                     },
                     error: function (xhr) {
-                        $("#editUserResult").html(`<div class="alert alert-danger">Update failed.</div>`);
+                        let msg = xhr.responseText || "";
+                        $("#editUserResult").html(`<div class="alert alert-danger">Update failed. ${msg}</div>`);
                     }
                 });
             });

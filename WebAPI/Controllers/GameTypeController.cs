@@ -2,6 +2,7 @@
 using GamePlatformBL.DTOs;
 using GamePlatformBL.Logger;
 using GamePlatformBL.Models;
+using GamePlatformBL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +15,13 @@ public class GameTypeController : ControllerBase
 {
     private readonly GamePlatformRwaContext context;
     private readonly LogService logService;
+    private readonly GameTypeRepository _gameTypeRepository;
     private readonly IMapper _mapper;
     public GameTypeController(GamePlatformRwaContext context, LogService logService, IMapper mapper)
     {
         this.context = context;
         this.logService = logService;
+        this._gameTypeRepository = new GameTypeRepository(context, logService);
         _mapper = mapper;
     }
 
@@ -32,7 +35,7 @@ public class GameTypeController : ControllerBase
 
         try
         {
-            var result = context.GameTypes;
+            var result = _gameTypeRepository.GetAll();
             var mappedResult = _mapper.Map<IEnumerable<GameTypeDto>>(result);
             if (!mappedResult.Any())
             {
@@ -58,14 +61,7 @@ public class GameTypeController : ControllerBase
 
         try
         {
-            var result = context.GameTypes.FirstOrDefault(x => x.Id == id);
-
-            if (result == null)
-            {
-                logService.Log($"Could not find game with ID {id}", "No results");
-                return NotFound($"Could not find game with ID {id}");
-            }
-
+            var result = _gameTypeRepository.Get(id);
             var mappedResult = _mapper.Map<GameTypeDto>(result);
             logService.Log($"Found {mappedResult.Id} GameType.", "Success");
             return Ok(mappedResult);

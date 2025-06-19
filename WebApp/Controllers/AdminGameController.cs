@@ -51,7 +51,7 @@ namespace WebApp.Controllers
             if (response.IsSuccessStatusCode)
             {
                 TempData["SuccessMessage"] = "Game successfully created.";
-                return RedirectToAction("Index");
+                return View(new AdminGameViewModel());
             }
 
             TempData["ErrorMessage"] = "Failed to create game.";
@@ -100,16 +100,41 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Save(AdminGameViewModel model, int SelectedGameTypeId, List<int> SelectedGenreIds)
         {
             model.GameType = new GameTypeViewModel { Id = SelectedGameTypeId };
-         //   model.Genres = SelectedGenreIds.Select(id => new GameGenreViewModel { Genre.Id = id }).ToList(); 
             model.GameTypeId = SelectedGameTypeId;
             model.genreIds = SelectedGenreIds;
-
+          
             if (model.Id == 0)
-               await _apiService.PostAsync("Game/CreateGame", model);
-            else
-                await _apiService.PutWithResponseAsync($"Game/UpdateGame?id={model.Id}", model);
+            {
+                var response = await _apiService.PostAsync("Game/CreateGame", model);
 
-            return RedirectToAction("Index");
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game successfully created. You can always add another game!";
+                    var newVM = new AdminGameViewModel();
+                    ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+                    ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
+                    return View("Create", newVM);
+                } else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    TempData["ErrorMessage"] = $"Failed to create game. Reason: {errorMessage}";
+                    ViewBag.GameTypes = _mapper.Map<List<GameTypeViewModel>>(await _apiService.GetAsync<List<GameTypeDto>>("GameType/GetAllGameTypes"));
+                    ViewBag.Genres = _mapper.Map<List<GenreViewModel>>(await _apiService.GetAsync<List<GenreDto>>("GameGenre/GetAllGenres"));
+                    return View("Create", model);
+                }
+            } else
+            {
+                var response = await _apiService.PutWithResponseAsync($"Game/UpdateGame?id={model.Id}", model);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game successfully updated.";
+                    return RedirectToAction("Index");
+                } else
+                {
+                    TempData["ErrorMessage"] = $"Failed to update game. Reason: ${response.StatusCode}";
+                    return View(model);
+                }
+            }
         }
 
         [HttpPost]

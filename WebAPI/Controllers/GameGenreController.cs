@@ -2,6 +2,7 @@
 using GamePlatformBL.DTOs;
 using GamePlatformBL.Logger;
 using GamePlatformBL.Models;
+using GamePlatformBL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,14 @@ namespace game_platform_rwa.Controllers
     {
         private GamePlatformRwaContext context;
         private readonly LogService logService;
+        private readonly GameGenreRepository _gameGenreRepository;
         private readonly IMapper _mapper;
 
         public GameGenreController(GamePlatformRwaContext context, LogService logService, IMapper mapper)
         {
             this.context = context;
             this.logService = logService;
+            this._gameGenreRepository = new GameGenreRepository(context, logService);
             _mapper = mapper;
         }
 
@@ -34,7 +37,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.Genres;
+                var result = _gameGenreRepository.GetAll();
                 var mappedResult = _mapper.Map<IEnumerable<GenreDto>>(result);
 
                 if (!mappedResult.Any())
@@ -63,7 +66,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.Genres.FirstOrDefault(x => x.Id == id);
+                var result = _gameGenreRepository.Get(id);
 
                 if (result == null)
                 {
@@ -165,18 +168,7 @@ namespace game_platform_rwa.Controllers
             }
             try
             {
-                var existing = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
-                if (existing == null) return NotFound($"Genre ID {id} not found");
-               // _mapper.Map(updated, existing);
-                existing.Name = updated.Name;
-                /*
-                                 context.GameGenres.RemoveRange(existing.GameGenres);
-                foreach (var genre in existing.GameGenres)
-                {
-                    context.GameGenres.Add(new GameGenre { GameId = id, GenreId = context.Genres.FirstOrDefault(g => g.Id == existing.Id)?.Id ?? 0 });
-                }
-                 */
-                context.SaveChanges();
+                var existing = _gameGenreRepository.Update(id, updated);
                 logService.Log($"Genre '{existing.Name}' with id={existing.Id} updated.");
 
                 return CreatedAtAction(nameof(GetGenreById), new { name = updated.Name }, new { existing.Id });
@@ -198,24 +190,7 @@ namespace game_platform_rwa.Controllers
             }
             try
             {
-                var genre = context.Genres.Include(g => g.GameGenres).FirstOrDefault(g => g.Id == id);
-                if (genre == null)
-                {
-                    logService.Log($"Failed to delete genre with id={id}.", "No results");
-                    return NotFound($"Genre with ID {id} not found.");
-                }
-
-                //var gameGenres = context.GameGenres.Where(gg => gg.GenreId == id);
-                //context.GameGenres.RemoveRange(gameGenres);
-
-                if (genre.GameGenres.Any())
-                {
-                    logService.Log($"Failed to delete genre with id={id}. Cannot delete genre assigned to games. ", "Error");
-                    return BadRequest("Cannot delete genre assigned to games.");
-                }
-
-                context.Genres.Remove(genre);
-                context.SaveChanges();
+                _gameGenreRepository.Remove(id);
                 logService.Log($"Deleted genre with id={id}. ", "Success");
                 return NoContent();
             } catch (Exception ex)

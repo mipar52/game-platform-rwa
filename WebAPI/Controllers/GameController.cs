@@ -2,6 +2,7 @@
 using GamePlatformBL.DTOs;
 using GamePlatformBL.Logger;
 using GamePlatformBL.Models;
+using GamePlatformBL.Repositories;
 using GamePlatformBL.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,13 @@ namespace game_platform_rwa.Controllers
     {
 
         private readonly GamePlatformRwaContext context;
+        private readonly GameRepository _gameRepository;
         private readonly LogService logService;
         private readonly IMapper _mapper;
         public GameController(GamePlatformRwaContext context, LogService logService, IMapper mapper) 
         {
             this.context = context;
+            this._gameRepository = new GameRepository(context, logService);
             this.logService = logService;
             this._mapper = mapper;
         }
@@ -35,11 +38,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.Games
-                    .Include(g => g.GameType)
-                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre);
-                //  .Include(g => g.Reviews);
-                
+                var result = _gameRepository.GetAll();
                 var mappedResult = _mapper.Map<IEnumerable<SimpleGameDto>>(result);
 
                 if (!mappedResult.Any()) 
@@ -124,11 +123,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var result = context.Games
-                    .Include(g => g.GameType)
-                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                    .Include(g => g.Reviews)
-                    .FirstOrDefault(x => x.Id == id);
+                var result = _gameRepository.Get(id);
 
                 if (result == null)
                 {
@@ -284,28 +279,7 @@ namespace game_platform_rwa.Controllers
                     return BadRequest($"Game with name {trimmedName} already exists");
                 }
                 var newGame = _mapper.Map<Game>(game);
-
-                foreach (var genre in game.GenreIds)
-                {
-                    context.GameGenres.Add(new GameGenre
-                    {
-                        GameId = newGame.Id,
-                        Game = newGame,
-                        GenreId = genre,
-                        Genre = context.Genres.FirstOrDefault(g => g.Id == genre) ?? new Genre { Id = genre, Name = "Unknown" }
-                    });
-
-                    logService.Log($"Added new Genre with id={genre} when creating the game.");
-                }
-
-                var gameTypes = context.GameTypes.FirstOrDefault(x => x.Id == newGame.GameTypeId);
-                if (gameTypes != null)
-                {
-                    gameTypes.Games.Add(newGame);
-                }
-
-               context.SaveChanges();
-                logService.Log($"Game '{newGame.Name}' with id={newGame.Id} created.");
+                _gameRepository.Add(newGame, game);
 
                 return CreatedAtAction(nameof(GetGameById), new { name = newGame.Name }, new { newGame.Id });
             }
@@ -327,36 +301,11 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var existing = context.Games
-                    .Include(g => g.GameGenres)
-                    .FirstOrDefault(g => g.Id == id);
-
-                if (existing == null)
-                    return NotFound($"Game ID {id} not found");
-
-                // Map scalar properties only
+                var existing = _gameRepository.Update(id, game);
                 _mapper.Map(game, existing);
-
-                // Update GameGenres safely
-                // 1. Remove all existing
-                context.GameGenres.RemoveRange(existing.GameGenres);
-
-                // 2. Add new, avoiding nulls
-                foreach (var genreId in game.GenreIds.Distinct())
-                {
-                    if (context.Genres.Any(g => g.Id == genreId)) // Validate genre exists
-                    {
-                        context.GameGenres.Add(new GameGenre
-                        {
-                            GameId = id,
-                            GenreId = genreId
-                        });
-                    }
-                }
-
                 context.SaveChanges();
-
                 logService.Log($"Game '{existing.Name}' with id={existing.Id} updated.");
+
                 return Ok(existing);
             }
             catch (Exception ex)
@@ -377,30 +326,7 @@ namespace game_platform_rwa.Controllers
 
             try
             {
-                var game = context.Games
-                    .Include(g => g.Reviews)
-                    .Include(g => g.GameGenres)
-                    .FirstOrDefault(g => g.Id == id);
-
-                if (game == null)
-                {
-                    logService.Log($"Failed to delete game with id={id}.", "No results");
-                    return NotFound($"Game with ID {id} not found.");
-                }
-
-                // Removal of related many-to-many and one-to-many entries
-                context.Reviews.RemoveRange(game.Reviews);
-                context.GameGenres.RemoveRange(game.GameGenres);
-                var gameTypes = context.GameTypes.FirstOrDefault(x => x.Games.Contains(game));
-                if (gameTypes != null)
-                {
-                    gameTypes.Games.Remove(game);
-                }
-                context.Games.Remove(game);
-
-                context.SaveChanges();
-                logService.Log($"Game '{game.Name}' with id={game.Id} deleted.");
-
+                _gameRepository.Remove(id);
                 return NoContent(); 
             }
             catch (Exception ex)
