@@ -2,9 +2,51 @@
 
 ## Overview
 
-Game Platform RWA is a web-based application designed to allow users to explore, review, and manage video games. The application supports two major user roles: regular users and administrators. Regular users can register, log in, browse games, leave reviews, and manage their profiles. Administrators have access to additional management tools, such as user management, game and genre CRUD operations, and moderation of user reviews.
+## 🎮 Overview
 
-This solution follows a layered architecture based on ASP.NET Core MVC, Entity Framework Core, and RESTful Web API communication.
+**Game Platform RWA** is a full-stack ASP.NET Core web application built to allow users to explore, review, and manage video games. The platform follows a **clean layered architecture**, separating responsibilities across a Web API, MVC frontend, business logic layer, and shared data models.
+
+The application supports two primary user roles:
+
+- **Regular Users** can:
+
+  - Register and authenticate using a secure JWT-backed cookie session
+  - Browse and filter games by type and genre
+  - Leave and manage reviews for games
+  - View their profile and update personal information
+
+- **Administrators** have access to:
+  - Full CRUD operations for games, game types, and genres
+  - User management (including role promotion)
+  - Review moderation (approve/disapprove/delete)
+  - A secure admin panel and logging system
+
+---
+
+### 🔐 Security Model
+
+- **Hybrid authentication**: JWT token for API + cookie-based authentication in WebApp
+- **Role-based authorization** enforced via ASP.NET Core Identity claims and `[Authorize(Roles = "...")]` attributes
+- **Static HTML admin tools** (e.g., log viewer) use localStorage-based JWT handling for secure direct API access
+
+---
+
+### 🧱 Technical Foundation
+
+- **Frontend**: ASP.NET Core MVC with Razor views, ViewModels, and dynamic routing
+- **Backend**: ASP.NET Core Web API with attribute-based routing and DTO handling
+- **Persistence**: Entity Framework Core with SQL Server
+- **Data Layer**: Repository + Interface abstraction per entity
+- **Business Logic**: Clean separation of DTOs, ViewModels, and AutoMapper profiles
+
+---
+
+### ⚙️ Design Principles
+
+- 🧩 **Modular CRUD**: Easily extendable and testable per entity (Game, Genre, etc.)
+- 🔁 **Generic Repositories**: Interfaces and services encapsulate logic
+- 📦 **DTO Mappers**: Automated translation from EF Core models to transport-safe objects
+- ✅ **Validation**: Attributes applied at ViewModel and DTO level for both client and server consistency
 
 ---
 
@@ -29,16 +71,83 @@ This solution follows a layered architecture based on ASP.NET Core MVC, Entity F
 
 ### 2. **Main Features**
 
-#### User Authentication & Authorization
+## 🔐 Authentication & Authorization
 
-- JWT-based login
-- `UserController` handles:
+The application uses a **hybrid authentication approach** that combines **JWT tokens** and **cookie-based sessions** to secure both API access and user sessions.
 
-  - Registration
-  - Login
-  - Password change
-  - Role promotion
-  - Identity check (`whoami`)
+---
+
+### ✅ API Authentication (JWT)
+
+- The WebAPI issues a **JWT token** upon successful login via `/api/User/Login`.
+- Token is generated using a secure symmetric key (`JWT:SecureKey`) defined in `appsettings.json`.
+- JWTs are validated in the WebAPI using `JwtBearerDefaults.AuthenticationScheme`.
+- Protected API routes use `[Authorize]` and optionally `[Authorize(Roles = "...")]`.
+- Swagger UI is configured with a Bearer token field for API testing.
+
+---
+
+### ✅ MVC WebApp Authentication (Cookies + JWT)
+
+- The `LoginController` in the MVC frontend sends credentials to the WebAPI login endpoint.
+- Upon success, the API returns:
+  - A `JWT` token
+  - The user's role
+- The WebApp stores the JWT in a custom claim and issues a **cookie-based identity** using:
+  - `ClaimTypes.Name` for the username
+  - `ClaimTypes.Role` for role-based routing
+  - `"JwtToken"` as a custom claim to allow secure API calls using `ApiService`
+- Authentication is maintained via `HttpContext.SignInAsync` and `CookieAuthenticationDefaults.AuthenticationScheme`.
+
+---
+
+### 🔓 Logout Handling
+
+- User is signed out using `HttpContext.SignOutAsync`.
+- Upon logout, they are redirected to the login page (`/Login`).
+
+---
+
+### 🛡️ Security Practices
+
+- CORS is configured in the WebAPI to allow AJAX requests from the frontend (`http://localhost:5196`) and support `Authorization` headers and cookies.
+- Static files such as `log-list.html` use JWT from `localStorage` to authenticate directly with the API.
+
+---
+
+### 🔐 Claims in Use
+
+| Claim Type | Description                    |
+| ---------- | ------------------------------ |
+| `Name`     | The username                   |
+| `Role`     | The role assigned by the API   |
+| `JwtToken` | The raw token for API requests |
+
+This setup allows seamless interaction between the ASP.NET Core MVC frontend and the secure Web API backend.
+
+---
+
+## 🗂️ Interfaces & Repository Pattern
+
+The application implements a **clean separation of concerns** using the **Repository Pattern** and **interface abstraction** for all entity-related operations.
+
+This design ensures:
+
+- Centralized data access logic
+- Easier unit testing and mocking
+- Reduced duplication across entities
+
+---
+
+### ✅ Structure
+
+For each domain entity (e.g., `Game`, `Genre`, `GameType`, `User`), the following components are implemented:
+
+| Component             | Description                                                             |
+| --------------------- | ----------------------------------------------------------------------- |
+| `I<Entity>Repository` | Interface defining CRUD methods (`GetAll`, `GetById`, `Create`, etc.)   |
+| `<Entity>Repository`  | Concrete implementation using Entity Framework Core                     |
+| `DTO Generator`       | Converts EF Core entities into lightweight data transfer objects (DTOs) |
 
 #### Game Management
 
@@ -178,5 +287,3 @@ This project is a full-featured ASP.NET Core MVC + Web API application with:
 - Secure user authentication
 - Robust review moderation system
 - Expandable, modular code structure
-
-This application is ideal for showcasing ASP.NET Core development best practices, authentication, and full CRUD capabilities.
