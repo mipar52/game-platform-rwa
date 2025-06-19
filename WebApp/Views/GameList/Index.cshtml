@@ -2,8 +2,8 @@
 
 @{
     ViewData["Title"] = "Game List";
-}
 
+}
 
 @if (Model.Games == null || !Model.Games.Any())
 {
@@ -13,10 +13,17 @@
 }
 else
 {
-    <h2 class="text-danger">Games</h2>
+    <h2 class="text-danger text-center">Games</h2>
+
+    <div class="text-center my-4">
+        <a asp-controller="GameType" asp-action="Index" class="btn btn-danger mx-2">Search for other games</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-danger mx-2">Go back to Home page</a>
+    </div>
+
     <div id="filteredGamesContainer">
         @await Html.PartialAsync("_FilteredGamesPartial", Model)
     </div>
+
 }
 
 @section Scripts {

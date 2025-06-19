@@ -150,6 +150,13 @@ namespace game_platform_rwa.Controllers
                     return BadRequest($"Username {trimmedUsername} already exists");
                 }
 
+                var trimmedEmail = userDto.Email;
+                if (context.Users.Any(x => x.Email.Equals(trimmedEmail)))
+                {
+                    logService.Log($"User with email {trimmedEmail} already exists", "Error");
+                    return BadRequest($"User with email {trimmedEmail} already exists");
+                }
+
                 // Hash the password
                 var b64salt = PasswordHashProvider.GetSalt();
                 var b64hash = PasswordHashProvider.GetHash(userDto.Password, b64salt);

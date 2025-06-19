@@ -5,6 +5,7 @@
 
 <div class="container mt-5">
     <h2 class="text-danger">All Games</h2>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-danger">Go back to Home page</a>
     <div class="row mt-4">
         @foreach (var game in Model)
         {

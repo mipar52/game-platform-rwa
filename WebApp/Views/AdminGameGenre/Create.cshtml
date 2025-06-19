@@ -3,6 +3,15 @@
     ViewData["Title"] = Model.Id == 0 ? "Create Game Genre" : "Edit Games Genre";
 }
 <h2 class="text-danger">@ViewData["Title"]</h2>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
 <form method="post">
     <div class="mb-3">
         <label asp-for="Name"></label>
@@ -10,4 +19,5 @@
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
     <button type="submit" class="btn btn-danger">Save</button>
+    <a asp-controller="AdminGameGenre" asp-action="Index" class="btn btn-danger">Go back to Admin panel</a>
 </form>

@@ -39,18 +39,36 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Create(GenreViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
-            var dto = _mapper.Map<GenreDto>(model);
-            HttpResponseMessage response = model.Id == 0
-                ? await _apiService.PostAsync("GameGenre/CreateGenre", dto)
-                : await _apiService.PutWithResponseAsync($"GameGenre/UpdateGenre?id={dto.Id}", dto);
 
-            DebugHelper.AppPrintDebugMessage($"GameGenre action status: {response}");
 
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction("Index");
+            if (model.Id == 0)
+            {
+                var response = await _apiService.PostAsync("GameGenre/CreateGenre", model);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game Genre successfully created. You can always add another genre!";
+                    return View(new GenreViewModel());
+                } 
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    TempData["ErrorMessage"] = $"Failed to create Game Genre. Reason: {errorMessage}";
+                    return View(model);
+                }
+            } else
+            {
+                var response = await _apiService.PutWithResponseAsync($"GameGenre/UpdateGenre?id={model.Id}", model);
+                DebugHelper.AppPrintDebugMessage($"GameGenre action status: {response}");
 
-            TempData["Error"] = "Failed to save game genre.";
-            return View(model);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game Genre successfully updated.";
+                    return RedirectToAction("Index");
+                }
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"Failed to save game genre. Reason: {errorMessage}";
+                return View(model);
+            }
         }
 
         [HttpPost]

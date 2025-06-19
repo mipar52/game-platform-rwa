@@ -41,17 +41,36 @@ namespace WebApp.Controllers.Admin
             if (!ModelState.IsValid) return View(model);
 
             var dto = _mapper.Map<GameTypeDto>(model);
-            HttpResponseMessage response = model.Id == 0
-                ? await _apiService.PostAsync("GameType/CreateGameType", dto)
-                : await _apiService.PutWithResponseAsync($"GameType/UpdateGameType?id={dto.Id}", dto);
+            if (model.Id == 0)
+            {
+                var response = await _apiService.PostAsync("GameType/CreateGameType", dto);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game Type successfully created. You can always add another type!";
+                    return View("Create", new GameTypeViewModel());
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    TempData["ErrorMessage"] = $"Failed to create GameType. Reason: {errorMessage}";
+                    return View("Create", model);
+                }
+            }
+            else
+            {
+                var response = await _apiService.PutWithResponseAsync($"GameType/UpdateGameType?id={dto.Id}", dto);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Game Type successfully updated.";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = $"Failed to update game. Reason: ${response.StatusCode}";
+                    return View(model);
+                }
 
-            DebugHelper.AppPrintDebugMessage($"GameType action status: {response}, message: {response.RequestMessage}");
-
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction("Index");
-
-            TempData["Error"] = "Failed to save game type.";
-            return View(model);
+            }
         }
 
         [HttpPost]
